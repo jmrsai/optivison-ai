@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -10,6 +11,7 @@ import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { generateRiskAssessmentReport } from '@/ai/flows/risk-assessment-report';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
+import { saveScan } from '@/lib/storage';
 
 type PatientAnalysisProps = {
   patient: Patient;
@@ -44,8 +46,9 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
         clinicalNotes,
         status: 'processing',
       };
-
-      setScans((prev) => [newScanPlaceholder, ...prev]);
+      
+      const newScans = [newScanPlaceholder, ...scans];
+      setScans(newScans);
 
       try {
         // Step 1: AI Diagnostics
@@ -55,9 +58,8 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
           clinicalNotes: clinicalNotes,
         });
         
-        setScans((prev) =>
-          prev.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s))
-        );
+        const updateWithAnalysis = newScans.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s));
+        setScans(updateWithAnalysis);
 
         // Step 2: Risk Assessment
         const riskResult = await generateRiskAssessmentReport({
@@ -65,9 +67,8 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
             patientHistory: patient.history,
         });
 
-        setScans((prev) =>
-          prev.map((s) => (s.id === tempId ? { ...s, riskAssessment: riskResult.riskAssessmentReport } : s))
-        );
+        const updateWithRisk = updateWithAnalysis.map((s) => (s.id === tempId ? { ...s, riskAssessment: riskResult.riskAssessmentReport } : s));
+        setScans(updateWithRisk);
 
         // Step 3: Full Report
         const reportResult = await generatePatientReport({
@@ -77,9 +78,19 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
             patientHistory: patient.history,
         });
 
+        const finalScan: Scan = {
+          ...newScanPlaceholder,
+          imageUrl: scanImage, // Save the data URI instead of blob URL
+          analysis: analysisResult,
+          riskAssessment: riskResult.riskAssessmentReport,
+          report: reportResult.report,
+          status: 'completed'
+        };
+
         setScans((prev) =>
-          prev.map((s) => (s.id === tempId ? { ...s, report: reportResult.report, status: 'completed' } : s))
+          prev.map((s) => (s.id === tempId ? finalScan : s))
         );
+        saveScan(finalScan);
 
         toast({
           title: "Analysis Complete",
@@ -88,7 +99,9 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
 
       } catch (error) {
         console.error("AI analysis failed:", error);
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, status: 'failed' } : s)));
+        const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
+        setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
+        saveScan(failedScan);
         toast({
           variant: "destructive",
           title: "Analysis Failed",

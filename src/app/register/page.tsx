@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MOCK_PATIENTS } from '@/lib/mock-data';
+import { savePatient, getPatients } from '@/lib/storage';
 import { Patient } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
@@ -33,20 +33,21 @@ export default function RegisterPatientPage() {
     defaultValues: {
       name: '',
       age: '' as any,
+      gender: undefined,
       history: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newPatient: Patient = {
-      id: (MOCK_PATIENTS.length + 1).toString(),
+      id: `patient-${Date.now()}`,
       ...values,
       lastVisit: new Date().toISOString().split('T')[0],
       avatarUrl: `https://picsum.photos/seed/${values.name}/100/100`,
       riskLevel: 'N/A',
     };
 
-    MOCK_PATIENTS.push(newPatient);
+    savePatient(newPatient);
     
     toast({
         title: "Patient Registered",

@@ -1,12 +1,23 @@
+
+'use client';
+
 import { AppHeader } from '@/components/layout/app-header';
 import { PatientList } from '@/components/patient-list';
-import { MOCK_PATIENTS } from '@/lib/mock-data';
+import { getPatients } from '@/lib/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { Patient } from '@/lib/types';
 
 export default function DashboardPage() {
+  const [patients, setPatients] = useState<Patient[]>([]);
+
+  useEffect(() => {
+    setPatients(getPatients());
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -26,7 +37,7 @@ export default function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <PatientList patients={MOCK_PATIENTS} />
+            <PatientList patients={patients} />
           </CardContent>
         </Card>
       </main>
