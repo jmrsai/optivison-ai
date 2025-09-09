@@ -2,6 +2,9 @@ import { AppHeader } from '@/components/layout/app-header';
 import { PatientList } from '@/components/patient-list';
 import { MOCK_PATIENTS } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
 
 export default function DashboardPage() {
   return (
@@ -13,8 +16,14 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Your intelligent ophthalmology diagnostic assistant.</p>
         </div>
         <Card className="shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Patient Dashboard</CardTitle>
+            <Button asChild>
+              <Link href="/register">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Register New Patient
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             <PatientList patients={MOCK_PATIENTS} />

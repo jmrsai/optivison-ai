@@ -12,6 +12,8 @@ import {
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
 
 export function AppHeader() {
   return (
@@ -62,7 +64,7 @@ export function AppHeader() {
             </SheetTrigger>
             <SheetContent side="left">
                 <SheetHeader>
-                  <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                  <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
                 </SheetHeader>
                <nav className="grid gap-6 text-lg font-medium mt-8">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
@@ -71,6 +73,9 @@ export function AppHeader() {
                 </Link>
                 <Link href="/" className="hover:text-foreground">
                   Dashboard
+                </Link>
+                 <Link href="/register" className="hover:text-foreground">
+                  Register Patient
                 </Link>
               </nav>
             </SheetContent>
