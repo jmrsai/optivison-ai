@@ -32,7 +32,7 @@ export default function RegisterPatientPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      age: undefined,
+      age: '' as any,
       history: '',
     },
   });
