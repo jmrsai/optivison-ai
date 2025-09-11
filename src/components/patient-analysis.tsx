@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -37,11 +36,12 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
     reader.onload = async () => {
       const scanImage = reader.result as string;
       const tempId = `scan-${Date.now()}`;
+      const scanDate = new Date().toISOString().split('T')[0];
 
       const newScanPlaceholder: Scan = {
         id: tempId,
         patientId: patient.id,
-        date: new Date().toISOString().split('T')[0],
+        date: scanDate,
         imageUrl: URL.createObjectURL(imageFile),
         clinicalNotes,
         status: 'processing',
@@ -61,20 +61,14 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
         const updateWithAnalysis = newScans.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s));
         setScans(updateWithAnalysis);
 
-        // Step 2: Risk Assessment
-        const riskResult = await generateRiskAssessmentReport({
-            scanAnalysis: analysisResult.diagnosticInsights,
-            patientHistory: patient.history,
-        });
-
-        const updateWithRisk = updateWithAnalysis.map((s) => (s.id === tempId ? { ...s, riskAssessment: riskResult.riskAssessmentReport } : s));
-        setScans(updateWithRisk);
-
-        // Step 3: Full Report
+        // Step 2: Full Report
         const reportResult = await generatePatientReport({
-            scanImage: scanImage,
-            aiFindings: analysisResult.diagnosticInsights,
-            riskAssessment: riskResult.riskAssessmentReport,
+            patientName: patient.name,
+            patientAge: patient.age,
+            patientGender: patient.gender,
+            scanDate: scanDate,
+            clinicalNotes: clinicalNotes,
+            analysis: analysisResult,
             patientHistory: patient.history,
         });
 
@@ -82,7 +76,6 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
           ...newScanPlaceholder,
           imageUrl: scanImage, // Save the data URI instead of blob URL
           analysis: analysisResult,
-          riskAssessment: riskResult.riskAssessmentReport,
           report: reportResult.report,
           status: 'completed'
         };
@@ -94,7 +87,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
 
         toast({
           title: "Analysis Complete",
-          description: "AI analysis, risk assessment, and report have been generated.",
+          description: "AI analysis and full report have been generated.",
         });
 
       } catch (error) {
@@ -112,7 +105,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
   };
 
   return (
-    <div>
+    <div className="no-print">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Scan History</h2>
         <Button onClick={() => setSheetOpen(true)}>
@@ -123,7 +116,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
 
       <div className="space-y-6">
         {scans.length > 0 ? (
-          scans.map((scan) => <ScanCard key={scan.id} scan={scan} />)
+          scans.map((scan) => <ScanCard key={scan.id} scan={scan} patient={patient} />)
         ) : (
           <div className="text-center py-12 border-2 border-dashed rounded-lg">
             <p className="text-muted-foreground">No scans found for this patient.</p>

@@ -53,6 +53,9 @@ const riskAssessmentReportFlow = ai.defineFlow(
     outputSchema: RiskAssessmentOutputSchema,
   },
   async input => {
+    // This flow is now largely superseded by the more detailed 'generatePatientReport' flow.
+    // We can keep it for now or decide to deprecate it. For now, we'll just create a simple summary.
+    
     const {output} = await prompt(input);
     return output!;
   }

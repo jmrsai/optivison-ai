@@ -70,3 +70,30 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .printable-area {
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+  .no-print {
+    display: none;
+  }
+  .printable-area .print-only {
+    display: block;
+  }
+  .printable-area .print-p-0 {
+    padding: 0;
+  }
+  .printable-area .print-shadow-none {
+    box-shadow: none;
+  }
+  .printable-area .print-border-none {
+    border: none;
+  }
+}

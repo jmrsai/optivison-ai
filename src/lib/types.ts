@@ -19,6 +19,6 @@ export type Scan = {
   clinicalNotes: string;
   status: 'completed' | 'processing' | 'failed';
   analysis?: AnalyzeEyeScanOutput;
-  riskAssessment?: string;
+  riskAssessment?: string; // This can be deprecated or kept for legacy
   report?: string;
 };

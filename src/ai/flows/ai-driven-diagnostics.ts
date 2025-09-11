@@ -1,4 +1,3 @@
-// This is a server-side file.
 'use server';
 
 /**
@@ -21,7 +20,7 @@ const AnalyzeEyeScanInputSchema = z.object({
   patientHistory: z
     .string()
     .optional()
-    .describe('The patient\'s medical history related to eye health.'),
+    .describe("The patient's medical history related to eye health."),
   clinicalNotes: z
     .string()
     .optional()
@@ -32,16 +31,26 @@ export type AnalyzeEyeScanInput = z.infer<typeof AnalyzeEyeScanInputSchema>;
 const AnalyzeEyeScanOutputSchema = z.object({
   diagnosticInsights: z
     .string()
-    .describe('Diagnostic insights based on the eye scan analysis.'),
+    .describe('A detailed summary of diagnostic insights based on the eye scan analysis.'),
   potentialAbnormalities: z
     .array(z.string())
-    .describe('A list of potential abnormalities identified in the eye scan.'),
+    .describe('A list of potential abnormalities or diseases identified in the eye scan (e.g., Glaucoma, Diabetic Retinopathy, Macular Degeneration).'),
+  earlySigns: z
+    .array(z.string())
+    .describe('A list of any subtle or early signs of disease detected.'),
+  diseaseStaging: z
+    .string()
+    .optional()
+    .describe('If a disease is identified, provide its stage (e.g., "Early-stage", "Moderate", "Advanced").'),
+  treatmentSuggestions: z
+    .array(z.string())
+    .describe('A list of suggested treatments or management plans based on the diagnosis.'),
   confidenceLevel: z
     .number()
-    .describe('The confidence level of the AI in its analysis (0-1).'),
+    .describe('The confidence level of the AI in its analysis (from 0 to 1).'),
   recommendations: z
     .string()
-    .describe('Recommendations based on the analysis.'),
+    .describe('Recommendations for next steps, such as follow-up tests or specialist referrals.'),
 });
 export type AnalyzeEyeScanOutput = z.infer<typeof AnalyzeEyeScanOutputSchema>;
 
@@ -53,13 +62,13 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist, and will analyze eye scans to identify potential abnormalities and provide diagnostic insights. Include a confidence level (0-1). Also provide recommendations based on the analysis.
+  prompt: `You are an expert ophthalmologist AI. Your task is to conduct a comprehensive, A-to-Z analysis of an eye scan image. Provide a detailed diagnosis, identify early signs of disease, suggest treatments, and estimate the stage of any detected conditions.
 
 Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on the provided eye scan, patient history, and clinical notes, provide diagnostic insights, potential abnormalities, a confidence level, and recommendations.`, // changed from triple braces to double braces
+Based on all the provided information, perform a full diagnostic analysis. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, early signs of disease, disease staging (if applicable), treatment suggestions, a confidence level, and recommendations for next steps.`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(
