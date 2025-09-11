@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Patient } from '@/lib/types';
@@ -7,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import { Eye } from 'lucide-react';
 
 type PatientListProps = {
   patients: Patient[];
@@ -38,6 +41,7 @@ export function PatientList({ patients }: PatientListProps) {
             <TableHead className="hidden md:table-cell">Gender</TableHead>
             <TableHead className="hidden lg:table-cell">Last Visit</TableHead>
             <TableHead>Risk Level</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -72,6 +76,14 @@ export function PatientList({ patients }: PatientListProps) {
                 >
                   {patient.riskLevel}
                 </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" asChild onClick={(e) => e.stopPropagation()}>
+                  <Link href={`/patient/${patient.id}`}>
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">View Patient</span>
+                  </Link>
+                </Button>
               </TableCell>
             </TableRow>
           ))}
