@@ -1,48 +1,64 @@
 import type { Patient } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 type PatientHeaderProps = {
   patient: Patient;
 };
 
+const getRiskBadgeVariant = (riskLevel: Patient['riskLevel']) => {
+    switch (riskLevel) {
+      case 'High':
+        return 'destructive';
+      case 'Medium':
+        return 'secondary';
+      case 'Low':
+        return 'default';
+      default:
+        return 'outline';
+    }
+  };
+
 export function PatientHeader({ patient }: PatientHeaderProps) {
   return (
-    <Card className="overflow-hidden shadow-sm">
-      <CardHeader className="flex flex-row items-center gap-4 bg-muted/30 p-4">
-        <Avatar className="h-16 w-16 border">
+    <Card className="overflow-hidden shadow-sm no-print">
+      <CardHeader className="flex flex-row items-center gap-6 bg-muted/50 p-6">
+        <Avatar className="h-24 w-24 border-2 border-white">
           <AvatarImage src={patient.avatarUrl} alt={patient.name} />
-          <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
+          <AvatarFallback className="text-3xl">{patient.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
         </Avatar>
-        <div>
-          <CardTitle className="text-2xl">{patient.name}</CardTitle>
+        <div className="grid gap-1">
+          <h1 className="text-3xl font-bold">{patient.name}</h1>
           <p className="text-muted-foreground">Patient ID: {patient.id}</p>
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="flex flex-col">
-            <span className="font-medium text-muted-foreground">Age</span>
-            <span className="font-semibold">{patient.age}</span>
+          <div className="space-y-1">
+            <p className="font-medium text-muted-foreground">Age</p>
+            <p className="font-semibold text-base">{patient.age}</p>
           </div>
-          <div className="flex flex-col">
-            <span className="font-medium text-muted-foreground">Gender</span>
-            <span className="font-semibold">{patient.gender}</span>
+          <div className="space-y-1">
+            <p className="font-medium text-muted-foreground">Gender</p>
+            <p className="font-semibold text-base">{patient.gender}</p>
           </div>
-          <div className="flex flex-col">
-            <span className="font-medium text-muted-foreground">Last Visit</span>
-            <span className="font-semibold">{patient.lastVisit}</span>
+          <div className="space-y-1">
+            <p className="font-medium text-muted-foreground">Last Visit</p>
+            <p className="font-semibold text-base">{patient.lastVisit}</p>
           </div>
-          <div className="flex flex-col">
-            <span className="font-medium text-muted-foreground">Current Risk</span>
-            <span className="font-semibold">{patient.riskLevel}</span>
+          <div className="space-y-1">
+            <p className="font-medium text-muted-foreground">Current Risk</p>
+            <Badge variant={getRiskBadgeVariant(patient.riskLevel)} className="text-base font-semibold capitalize">
+                {patient.riskLevel}
+            </Badge>
           </div>
         </div>
-        <Separator className="my-4" />
+        <Separator className="my-6" />
          <div>
             <h4 className="font-medium text-muted-foreground text-sm">Patient History Notes</h4>
-            <p className="font-semibold text-sm mt-1">{patient.history}</p>
+            <p className="text-sm mt-2 text-foreground/90 max-w-prose">{patient.history}</p>
         </div>
       </CardContent>
     </Card>

@@ -17,11 +17,11 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm no-print">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Logo className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-primary">OptiVision AI</span>
+          <Logo className="h-8 w-8 text-primary" />
+          <span className="text-xl font-bold text-foreground">OptiVision AI</span>
         </Link>
 
         <div className="flex items-center gap-4">
@@ -33,8 +33,8 @@ export function AppHeader() {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src="https://picsum.photos/id/1/100/100" alt="@drcarter" />
                   <AvatarFallback>DC</AvatarFallback>
                 </Avatar>
@@ -69,7 +69,7 @@ export function AppHeader() {
                <nav className="grid gap-6 text-lg font-medium mt-8">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
                   <Logo className="h-6 w-6" />
-                  <span className="sr-only">OptiVision AI</span>
+                  <span>OptiVision AI</span>
                 </Link>
                 <Link href="/" className="hover:text-foreground">
                   Dashboard
