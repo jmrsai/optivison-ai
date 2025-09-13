@@ -48,8 +48,12 @@ export function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="#">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">Settings</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Log out</DropdownMenuItem>
             </DropdownMenuContent>
@@ -76,6 +80,9 @@ export function AppHeader() {
                 </Link>
                  <Link href="/register" className="hover:text-foreground">
                   Register Patient
+                </Link>
+                <Link href="/settings" className="hover:text-foreground">
+                  Settings
                 </Link>
               </nav>
             </SheetContent>
