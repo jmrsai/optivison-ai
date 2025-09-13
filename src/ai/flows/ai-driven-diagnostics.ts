@@ -35,6 +35,7 @@ const AnalyzeEyeScanOutputSchema = z.object({
   potentialAbnormalities: z
     .array(z.string())
     .describe('A list of potential abnormalities or diseases identified in the eye scan (e.g., Glaucoma, Diabetic Retinopathy, Macular Degeneration).'),
+  differentialDiagnosis: z.array(z.string()).describe('A list of possible alternative diagnoses to consider.'),
   earlySigns: z
     .array(z.string())
     .describe('A list of any subtle or early signs of disease detected.'),
@@ -42,15 +43,21 @@ const AnalyzeEyeScanOutputSchema = z.object({
     .string()
     .optional()
     .describe('If a disease is identified, provide its stage (e.g., "Early-stage", "Moderate", "Advanced").'),
+  riskAssessment: z
+    .string()
+    .describe('An assessment of the patient’s risk for disease progression or developing new conditions.'),
   treatmentSuggestions: z
     .array(z.string())
     .describe('A list of suggested treatments or management plans based on the diagnosis.'),
+  followUpPlan: z
+    .string()
+    .describe('A detailed plan for patient follow-up, including recommended tests and timelines.'),
   confidenceLevel: z
     .number()
     .describe('The confidence level of the AI in its analysis (from 0 to 1).'),
   recommendations: z
     .string()
-    .describe('Recommendations for next steps, such as follow-up tests or specialist referrals.'),
+    .describe('Recommendations for next steps, such as specialist referrals.'),
 });
 export type AnalyzeEyeScanOutput = z.infer<typeof AnalyzeEyeScanOutputSchema>;
 
@@ -68,7 +75,7 @@ Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on all the provided information, perform a full diagnostic analysis. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, early signs of disease, disease staging (if applicable), treatment suggestions, a confidence level, and recommendations for next steps.`,
+Based on all the provided information, perform a full diagnostic analysis. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, disease staging (if applicable), risk assessment, treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

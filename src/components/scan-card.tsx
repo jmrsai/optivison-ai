@@ -116,6 +116,13 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
                     </ul>
                   ) : <p>None identified.</p>}
 
+                  <h4 className="font-bold mt-4">Differential Diagnosis</h4>
+                  {scan.analysis.differentialDiagnosis?.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {scan.analysis.differentialDiagnosis.map((ab, i) => <li key={i}>{ab}</li>)}
+                    </ul>
+                  ) : <p>None noted.</p>}
+
                    <h4 className="font-bold mt-4">Early Signs Detected</h4>
                   {scan.analysis.earlySigns?.length > 0 ? (
                     <ul className="list-disc pl-5">

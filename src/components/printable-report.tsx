@@ -85,6 +85,14 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
                   </ul>
                 ) : <p>None identified.</p>}
               </div>
+               <div>
+                <h3 className="font-semibold text-gray-600">Differential Diagnosis</h3>
+                {analysis.differentialDiagnosis?.length > 0 ? (
+                  <ul className="list-disc list-inside">
+                    {analysis.differentialDiagnosis.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
+                ) : <p>None noted.</p>}
+              </div>
               <div>
                 <h3 className="font-semibold text-gray-600">Detected Early Signs</h3>
                  {analysis.earlySigns?.length > 0 ? (
@@ -108,12 +116,20 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
          <h2 className="text-xl font-semibold border-b pb-2 mb-4 text-gray-700">Treatment & Recommendations</h2>
          <div className="text-sm space-y-4">
             <div>
+              <h3 className="font-semibold text-gray-600">Risk Assessment</h3>
+              <p>{analysis.riskAssessment}</p>
+            </div>
+            <div>
               <h3 className="font-semibold text-gray-600">Suggested Treatment Plan</h3>
               {analysis.treatmentSuggestions?.length > 0 ? (
                 <ul className="list-disc list-inside">
                   {analysis.treatmentSuggestions.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
               ) : <p>No specific treatments suggested.</p>}
+            </div>
+             <div>
+              <h3 className="font-semibold text-gray-600">Follow-Up Plan</h3>
+              <p>{analysis.followUpPlan}</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-600">Recommended Next Steps</h3>
