@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Patient } from '@/lib/types';
@@ -46,7 +45,7 @@ export function PatientList({ patients }: PatientListProps) {
     <div className="overflow-x-auto border rounded-lg">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
             <TableHead>Patient</TableHead>
             <TableHead className="hidden md:table-cell">Age</TableHead>
             <TableHead className="hidden md:table-cell">Gender</TableHead>
@@ -91,7 +90,7 @@ export function PatientList({ patients }: PatientListProps) {
               <TableCell className="text-right">
                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/patient/${patient.id}`)}}>
                     <Eye className="mr-2 h-4 w-4" />
-                    View
+                    View Record
                 </Button>
               </TableCell>
             </TableRow>

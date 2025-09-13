@@ -113,13 +113,22 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
     setIsLongitudinalLoading(true);
     setLongitudinalAnalysis(null);
     try {
-        const completedScans = scans.filter(s => s.status === 'completed');
+        const completedScans = scans.filter(s => s.status === 'completed' && s.analysis);
+        if (completedScans.length < 2) {
+             toast({
+                variant: "destructive",
+                title: "Not Enough Data",
+                description: "Longitudinal analysis requires at least two completed scans.",
+            });
+            setIsLongitudinalLoading(false);
+            return;
+        }
         const result = await generateLongitudinalAnalysis({
             patientHistory: patient.history,
             scans: completedScans.map(s => ({
                 date: s.date,
-                diagnosticInsights: s.analysis?.diagnosticInsights || 'N/A',
-                potentialAbnormalities: s.analysis?.potentialAbnormalities || [],
+                diagnosticInsights: s.analysis!.diagnosticInsights,
+                potentialAbnormalities: s.analysis!.potentialAbnormalities,
             }))
         });
         setLongitudinalAnalysis(result.longitudinalSummary);
@@ -137,7 +146,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
 
   return (
     <div className="no-print space-y-8">
-      {scans.length > 1 && (
+      {scans.filter(s => s.status === 'completed').length > 1 && (
         <Card>
           <CardHeader>
             <CardTitle>Longitudinal Progression Analysis</CardTitle>
@@ -151,7 +160,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
                     <Skeleton className="h-4 w-3/4" />
                 </div>
             ) : longitudinalAnalysis ? (
-              <div className="prose prose-sm max-w-none text-foreground/90">{longitudinalAnalysis}</div>
+              <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">{longitudinalAnalysis}</div>
             ) : (
                 <div className="flex flex-col items-center justify-center text-center gap-4 p-8 border-2 border-dashed rounded-lg">
                     <TrendingUp className="h-12 w-12 text-muted-foreground" />
@@ -176,7 +185,7 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
             {scans.length > 0 ? (
               scans.map((scan) => <ScanCard key={scan.id} scan={scan} patient={patient} />)
             ) : (
-              <div className="text-center py-12 border-2 border-dashed rounded-lg">
+              <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/20">
                 <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium text-foreground">No Scans Found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">This patient does not have any scans yet.</p>
