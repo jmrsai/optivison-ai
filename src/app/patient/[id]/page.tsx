@@ -24,6 +24,9 @@ export default function PatientPage({ params }: { params: { id: string } }) {
     if (foundPatient) {
       setPatient(foundPatient);
       setScans(getScansByPatient(id));
+    } else {
+      // In a real app, you might want to redirect or show a proper not-found UI
+      // For now, we'll rely on the notFound() call after loading.
     }
     setLoading(false);
   }, [params.id]);
