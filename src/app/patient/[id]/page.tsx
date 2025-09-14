@@ -12,13 +12,12 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
-export default function PatientPage({ params }: { params: { id: string } }) {
+export default function PatientPage({ params: { id } }: { params: { id: string } }) {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const id = params.id;
     const foundPatient = getPatient(id);
     if (foundPatient) {
       setPatient(foundPatient);
@@ -28,7 +27,7 @@ export default function PatientPage({ params }: { params: { id: string } }) {
       // For now, we'll rely on the notFound() call after loading.
     }
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   const handlePatientUpdate = useCallback((updatedPatient: Patient) => {
     setPatient(updatedPatient);
