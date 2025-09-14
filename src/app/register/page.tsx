@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -8,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { savePatient, getPatients } from '@/lib/storage';
+import { savePatient } from '@/lib/storage';
 import { Patient } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';

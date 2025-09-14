@@ -9,7 +9,7 @@ import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
-import { saveScan, savePatient } from '@/lib/storage';
+import { saveScan } from '@/lib/storage';
 import { generateLongitudinalAnalysis } from '@/ai/flows/longitudinal-analysis';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
@@ -80,7 +80,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         
         // Step 3: Update patient risk level
         if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
-            const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel };
+            const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
             onPatientUpdate(updatedPatient);
         }
 

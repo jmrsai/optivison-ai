@@ -90,7 +90,23 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            'h4': {
+              'margin-top': '1em',
+              'margin-bottom': '0.5em',
+            },
+            'ul': {
+              'margin-top': '0.5em',
+            },
+             'p': {
+              'margin-top': '0.5em',
+            }
+          }
+        }
+      }
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
 } satisfies Config;

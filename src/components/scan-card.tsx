@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
-import { AlertCircle, CheckCircle, BrainCircuit, ShieldCheck, FileText, Loader, Printer, Download } from 'lucide-react';
+import { AlertCircle, CheckCircle, BrainCircuit, FileText, Loader, Printer } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
 import { useReactToPrint } from 'react-to-print';
@@ -82,8 +82,8 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
             <div className="flex items-center gap-2">
               {scan.status === 'completed' && (
                 <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download / Print
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print / Download
                 </Button>
               )}
               {getStatusBadge()}

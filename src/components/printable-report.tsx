@@ -49,11 +49,11 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
           </div>
           <div className="col-span-3">
              <p className="text-gray-500">Patient Medical History</p>
-             <p className="font-semibold">{patient.history}</p>
+             <p className="font-semibold whitespace-pre-wrap">{patient.history}</p>
           </div>
            <div className="col-span-3">
              <p className="text-gray-500">Clinical Notes for this Scan</p>
-             <p className="font-semibold">{scan.clinicalNotes || 'N/A'}</p>
+             <p className="font-semibold whitespace-pre-wrap">{scan.clinicalNotes || 'N/A'}</p>
           </div>
         </div>
       </section>

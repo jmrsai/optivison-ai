@@ -1,4 +1,3 @@
-
 import { MOCK_PATIENTS, MOCK_SCANS } from './mock-data';
 import type { Patient, Scan } from './types';
 
@@ -26,10 +25,10 @@ export function getPatients(): Patient[] {
   return patients ? JSON.parse(patients) : [];
 }
 
-export function getPatient(id: string): Patient | null {
-  if (!isBrowser()) return MOCK_PATIENTS.find(p => p.id === id) || null;
+export function getPatient(id: string): Patient | undefined {
+  if (!isBrowser()) return MOCK_PATIENTS.find(p => p.id === id);
   const patients = getPatients();
-  return patients.find((p) => p.id === id) || null;
+  return patients.find((p) => p.id === id);
 }
 
 export function savePatient(patient: Patient): void {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, X, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, X } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -35,6 +35,9 @@ export function FileUploader({ onFileSelect }: FileUploaderProps) {
     e.stopPropagation();
     setPreview(null);
     onFileSelect(null);
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
   };
 
   return (

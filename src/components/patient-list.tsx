@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Eye } from 'lucide-react';
+import Link from 'next/link';
 
 type PatientListProps = {
   patients: Patient[];
@@ -34,7 +35,7 @@ export function PatientList({ patients }: PatientListProps) {
       <div className="text-center py-12">
         <p className="text-muted-foreground">No patients registered yet.</p>
         <Button variant="link" asChild>
-          <a href="/register">Register the first patient</a>
+          <Link href="/register">Register the first patient</Link>
         </Button>
       </div>
     );
