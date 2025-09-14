@@ -12,7 +12,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
-export default function PatientPage({ params: { id } }: { params: { id: string } }) {
+export default function PatientPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,9 +23,6 @@ export default function PatientPage({ params: { id } }: { params: { id: string }
     if (foundPatient) {
       setPatient(foundPatient);
       setScans(getScansByPatient(id));
-    } else {
-      // In a real app, you might want to redirect or show a proper not-found UI
-      // For now, we'll rely on the notFound() call after loading.
     }
     setLoading(false);
   }, [id]);
