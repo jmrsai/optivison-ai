@@ -9,7 +9,7 @@ import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
-import { saveScan } from '@/lib/storage';
+import { saveScan, savePatient } from '@/lib/storage';
 import { generateLongitudinalAnalysis } from '@/ai/flows/longitudinal-analysis';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
@@ -18,9 +18,10 @@ import { Skeleton } from './ui/skeleton';
 type PatientAnalysisProps = {
   patient: Patient;
   initialScans: Scan[];
+  onPatientUpdate: (patient: Patient) => void;
 };
 
-export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps) {
+export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: PatientAnalysisProps) {
   const [scans, setScans] = useState<Scan[]>(initialScans);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
@@ -76,6 +77,12 @@ export function PatientAnalysis({ patient, initialScans }: PatientAnalysisProps)
             analysis: analysisResult,
             patientHistory: patient.history,
         });
+        
+        // Step 3: Update patient risk level
+        if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
+            const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel };
+            onPatientUpdate(updatedPatient);
+        }
 
         const finalScan: Scan = {
           ...newScanPlaceholder,

@@ -49,6 +49,7 @@ const AnalyzeEyeScanOutputSchema = z.object({
   riskAssessment: z
     .string()
     .describe('An assessment of the patient’s risk for disease progression or developing new conditions.'),
+  riskLevel: z.enum(['Low', 'Medium', 'High', 'N/A']).describe("The patient's overall risk level based on the analysis. Must be 'Low', 'Medium', or 'High'."),
   treatmentSuggestions: z
     .array(z.string())
     .describe('A list of suggested treatments or management plans based on the diagnosis.'),
@@ -78,7 +79,7 @@ Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), risk assessment, treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
+Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), a detailed risk assessment, a risk level ('Low', 'Medium', or 'High'), treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

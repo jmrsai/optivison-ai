@@ -4,13 +4,13 @@
 import { AppHeader } from '@/components/layout/app-header';
 import { PatientAnalysis } from '@/components/patient-analysis';
 import { PatientHeader } from '@/components/patient-header';
-import { getPatient, getScansByPatient } from '@/lib/storage';
+import { getPatient, getScansByPatient, savePatient } from '@/lib/storage';
 import { Card, CardContent } from '@/components/ui/card';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
 export default function PatientPage({ params }: { params: { id: string } }) {
@@ -27,6 +27,11 @@ export default function PatientPage({ params }: { params: { id: string } }) {
     }
     setLoading(false);
   }, [params]);
+
+  const handlePatientUpdate = useCallback((updatedPatient: Patient) => {
+    setPatient(updatedPatient);
+    savePatient(updatedPatient);
+  }, []);
 
   if (loading) {
     return (
@@ -59,7 +64,7 @@ export default function PatientPage({ params }: { params: { id: string } }) {
           <PatientHeader patient={patient} />
           <Card className="shadow-sm">
             <CardContent className="p-6">
-              <PatientAnalysis patient={patient} initialScans={scans} />
+              <PatientAnalysis patient={patient} initialScans={scans} onPatientUpdate={handlePatientUpdate} />
             </CardContent>
           </Card>
         </div>

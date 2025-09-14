@@ -21,13 +21,13 @@ if (isBrowser()) {
 // === Patient Functions ===
 
 export function getPatients(): Patient[] {
-  if (!isBrowser()) return [];
+  if (!isBrowser()) return MOCK_PATIENTS;
   const patients = localStorage.getItem(PATIENTS_KEY);
   return patients ? JSON.parse(patients) : [];
 }
 
 export function getPatient(id: string): Patient | null {
-  if (!isBrowser()) return null;
+  if (!isBrowser()) return MOCK_PATIENTS.find(p => p.id === id) || null;
   const patients = getPatients();
   return patients.find((p) => p.id === id) || null;
 }
@@ -47,13 +47,13 @@ export function savePatient(patient: Patient): void {
 // === Scan Functions ===
 
 export function getScans(): Scan[] {
-  if (!isBrowser()) return [];
+  if (!isBrowser()) return MOCK_SCANS;
   const scans = localStorage.getItem(SCANS_KEY);
   return scans ? JSON.parse(scans) : [];
 }
 
 export function getScansByPatient(patientId: string): Scan[] {
-  if (!isBrowser()) return [];
+  if (!isBrowser()) return MOCK_SCANS.filter(s => s.patientId === patientId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const scans = getScans();
   return scans.filter((s) => s.patientId === patientId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
