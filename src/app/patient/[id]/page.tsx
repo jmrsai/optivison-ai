@@ -19,14 +19,14 @@ export default function PatientPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { id } = params;
+    const id = params.id;
     const foundPatient = getPatient(id);
     if (foundPatient) {
       setPatient(foundPatient);
       setScans(getScansByPatient(id));
     }
     setLoading(false);
-  }, [params]);
+  }, [params.id]);
 
   const handlePatientUpdate = useCallback((updatedPatient: Patient) => {
     setPatient(updatedPatient);
