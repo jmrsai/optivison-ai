@@ -129,6 +129,13 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
                       {scan.analysis.earlySigns.map((sign, i) => <li key={i}>{sign}</li>)}
                     </ul>
                   ) : <p>None identified.</p>}
+
+                  <h4 className="font-bold mt-4">Prevention Suggestions</h4>
+                  {scan.analysis.preventionSuggestions?.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {scan.analysis.preventionSuggestions.map((suggestion, i) => <li key={i}>{suggestion}</li>)}
+                    </ul>
+                  ) : <p>None provided.</p>}
                   
                   {scan.analysis.diseaseStaging && <>
                     <h4 className="font-bold mt-4">Disease Staging</h4>

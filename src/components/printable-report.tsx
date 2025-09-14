@@ -113,7 +113,7 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
       </section>
       
       <section className="mb-8">
-         <h2 className="text-xl font-semibold border-b pb-2 mb-4 text-gray-700">Treatment & Recommendations</h2>
+         <h2 className="text-xl font-semibold border-b pb-2 mb-4 text-gray-700">Treatment, Prevention & Recommendations</h2>
          <div className="text-sm space-y-4">
             <div>
               <h3 className="font-semibold text-gray-600">Risk Assessment</h3>
@@ -126,6 +126,14 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
                   {analysis.treatmentSuggestions.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
               ) : <p>No specific treatments suggested.</p>}
+            </div>
+             <div>
+              <h3 className="font-semibold text-gray-600">Prevention Suggestions</h3>
+              {analysis.preventionSuggestions?.length > 0 ? (
+                <ul className="list-disc list-inside">
+                  {analysis.preventionSuggestions.map((item, i) => <li key={i}>{item}</li>)}
+                </ul>
+              ) : <p>No specific prevention suggested.</p>}
             </div>
              <div>
               <h3 className="font-semibold text-gray-600">Follow-Up Plan</h3>

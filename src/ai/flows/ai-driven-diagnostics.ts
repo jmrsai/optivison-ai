@@ -38,7 +38,10 @@ const AnalyzeEyeScanOutputSchema = z.object({
   differentialDiagnosis: z.array(z.string()).describe('A list of possible alternative diagnoses to consider.'),
   earlySigns: z
     .array(z.string())
-    .describe('A list of any subtle or early signs of disease detected.'),
+    .describe('A list of any subtle or early signs of disease detected. Focus on early detection.'),
+  preventionSuggestions: z
+    .array(z.string())
+    .describe('A list of suggested preventive measures based on the findings.'),
   diseaseStaging: z
     .string()
     .optional()
@@ -69,13 +72,13 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist AI. Your task is to conduct a comprehensive, A-to-Z analysis of an eye scan image. Provide a detailed diagnosis, identify early signs of disease, suggest treatments, and estimate the stage of any detected conditions.
+  prompt: `You are an expert ophthalmologist AI. Your task is to conduct a comprehensive, A-to-Z analysis of an eye scan image. Provide a detailed diagnosis, identify early signs of disease, suggest treatments and prevention strategies, and estimate the stage of any detected conditions.
 
 Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on all the provided information, perform a full diagnostic analysis. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, disease staging (if applicable), risk assessment, treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
+Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), risk assessment, treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(
