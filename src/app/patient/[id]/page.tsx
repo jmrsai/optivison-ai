@@ -13,18 +13,19 @@ import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
 export default function PatientPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundPatient = getPatient(params.id);
+    const foundPatient = getPatient(id);
     if (foundPatient) {
       setPatient(foundPatient);
-      setScans(getScansByPatient(params.id));
+      setScans(getScansByPatient(id));
     }
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   const handlePatientUpdate = useCallback((updatedPatient: Patient) => {
     setPatient(updatedPatient);
