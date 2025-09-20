@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'OptiVision AI',
-  description: 'A professional ophthalmology diagnostic assistant app leveraging AI to assist clinicians.',
+  description: 'An advanced ophthalmology EHR leveraging deep learning to assist clinicians with diagnostic insights and patient management.',
 };
 
 export default function RootLayout({

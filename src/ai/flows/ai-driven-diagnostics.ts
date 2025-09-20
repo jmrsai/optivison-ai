@@ -5,7 +5,7 @@
  *
  * - analyzeEyeScan - A function that analyzes an uploaded eye scan and provides diagnostic insights.
  * - AnalyzeEyeScanInput - The input type for the analyzeEyeScan function.
- * - AnalyzeEyeScanOutput - The return type for the analyzeEyeScan function.
+ * - AnalyzeEyeScanOutput - The return type for the analyzeEyescan function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -31,37 +31,37 @@ export type AnalyzeEyeScanInput = z.infer<typeof AnalyzeEyeScanInputSchema>;
 const AnalyzeEyeScanOutputSchema = z.object({
   diagnosticInsights: z
     .string()
-    .describe('A detailed summary of diagnostic insights based on the eye scan analysis.'),
+    .describe('A detailed summary of diagnostic insights based on the eye scan analysis. Reference specific biomarkers or features detected by the deep learning model.'),
   potentialAbnormalities: z
     .array(z.string())
-    .describe('A list of potential abnormalities or diseases identified in the eye scan (e.g., Glaucoma, Diabetic Retinopathy, Macular Degeneration).'),
-  differentialDiagnosis: z.array(z.string()).describe('A list of possible alternative diagnoses to consider.'),
+    .describe('A list of potential abnormalities or diseases identified from the deep learning analysis (e.g., Glaucoma, Diabetic Retinopathy, Macular Degeneration).'),
+  differentialDiagnosis: z.array(z.string()).describe('A list of possible alternative diagnoses to consider based on the identified patterns.'),
   earlySigns: z
     .array(z.string())
-    .describe('A list of any subtle or early signs of disease detected. Focus on early detection.'),
+    .describe('A list of any subtle or early-stage biomarkers of disease detected by the model. Focus on early detection.'),
   preventionSuggestions: z
     .array(z.string())
     .describe('A list of suggested preventive measures based on the findings.'),
   diseaseStaging: z
     .string()
     .optional()
-    .describe('If a disease is identified, provide its stage (e.g., "Early-stage", "Moderate", "Advanced").'),
+    .describe('If a disease is identified, provide its stage (e.g., "Early-stage", "Moderate", "Advanced") based on quantitative analysis if possible.'),
   riskAssessment: z
     .string()
-    .describe('An assessment of the patient’s risk for disease progression or developing new conditions.'),
+    .describe('An assessment of the patient’s risk for disease progression or developing new conditions, citing specific features from the scan.'),
   riskLevel: z.enum(['Low', 'Medium', 'High', 'N/A']).describe("The patient's overall risk level based on the analysis. Must be 'Low', 'Medium', or 'High'."),
   treatmentSuggestions: z
     .array(z.string())
     .describe('A list of suggested treatments or management plans based on the diagnosis.'),
   followUpPlan: z
     .string()
-    .describe('A detailed plan for patient follow-up, including recommended tests and timelines.'),
+    .describe('A detailed plan for patient follow-up, including recommended imaging, tests, and timelines.'),
   confidenceLevel: z
     .number()
-    .describe('The confidence level of the AI in its analysis (from 0 to 1).'),
+    .describe('The confidence level of the AI model in its primary diagnosis (from 0 to 1).'),
   recommendations: z
     .string()
-    .describe('Recommendations for next steps, such as specialist referrals.'),
+    .describe('Recommendations for next steps, such as specialist referrals or further imaging.'),
 });
 export type AnalyzeEyeScanOutput = z.infer<typeof AnalyzeEyeScanOutputSchema>;
 
@@ -73,13 +73,20 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist AI. Your task is to conduct a comprehensive, A-to-Z analysis of an eye scan image. Provide a detailed diagnosis, identify early signs of disease, suggest treatments and prevention strategies, and estimate the stage of any detected conditions.
+  prompt: `You are an expert ophthalmologist AI, powered by state-of-the-art deep learning models trained on millions of retinal scans. Your task is to perform a comprehensive, A-to-Z analysis of an eye scan image. Your analysis should be equivalent to a deep learning-powered clinical decision support system.
 
+**Workflow:**
+1.  **Image Analysis**: Process the input image to perform segmentation of key structures (optic nerve, macula, blood vessels) and extract relevant features and biomarkers.
+2.  **Pattern Recognition**: Compare the extracted features against known patterns of ophthalmic diseases.
+3.  **Diagnosis and Reporting**: Generate a detailed report based on the findings.
+
+**Patient Information:**
 Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema with highly detailed and accurate information, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), a detailed risk assessment, a risk level ('Low', 'Medium', or 'High'), treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
+**Analysis Task:**
+Based on the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases by identifying subtle biomarkers. Fill out all fields in the output schema with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical, suitable for a medical expert. Reference the deep learning model's findings (e.g., "segmentation reveals...", "feature extraction identified...").`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

@@ -48,7 +48,7 @@ export function NewAnalysisSheet({ isOpen, onOpenChange, onSubmit }: NewAnalysis
         <SheetHeader>
           <SheetTitle>New AI Analysis</SheetTitle>
           <SheetDescription>
-            Upload a new eye scan and add any relevant clinical notes. The AI will analyze the scan and generate a report.
+            Upload a new eye scan. Our advanced deep learning models will analyze the scan and generate a detailed report.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-6">
