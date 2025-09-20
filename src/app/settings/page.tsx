@@ -14,8 +14,23 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+
+  useEffect(() => {
+    setIsDarkMode(theme === 'dark');
+  }, [theme]);
+
+  const handleThemeChange = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
+    setIsDarkMode(checked);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -75,7 +90,11 @@ export default function SettingsPage() {
                     Enable a darker color scheme for the UI.
                   </p>
                 </div>
-                <Switch id="dark-mode" disabled />
+                <Switch 
+                  id="dark-mode" 
+                  checked={isDarkMode}
+                  onCheckedChange={handleThemeChange}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
@@ -84,7 +103,11 @@ export default function SettingsPage() {
                     Receive email updates for critical analysis results.
                   </p>
                 </div>
-                <Switch id="notifications" disabled />
+                <Switch 
+                  id="notifications" 
+                  checked={emailNotifications}
+                  onCheckedChange={setEmailNotifications}
+                />
               </div>
             </CardContent>
           </Card>
