@@ -11,6 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
 import { useRef, useState } from 'react';
 import { PrintableReport } from './printable-report';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 type ScanCardProps = {
   scan: Scan;
@@ -40,18 +42,53 @@ const FailedState = () => (
 )
 
 export function ScanCard({ scan, patient }: ScanCardProps) {
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = async () => {
-    setIsPrinting(true);
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
     
-    // Allow time for the report to render before printing
-    await new Promise(resolve => setTimeout(resolve, 50));
+    setIsDownloading(true);
+
+    const canvas = await html2canvas(reportRef.current, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+    });
     
-    document.title = `OptiVision-Report-${patient.name.replace(/ /g, '_')}-${scan.date}`;
-    window.print();
-    setIsPrinting(false);
+    const imgData = canvas.toDataURL('image/png');
+    
+    // A4 dimensions in points (1 pt = 1/72 inch)
+    const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'pt',
+        format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const ratio = canvasWidth / canvasHeight;
+    const imgWidth = pdfWidth - 40; // with some margin
+    const imgHeight = imgWidth / ratio;
+
+    let heightLeft = imgHeight;
+    let position = 20;
+
+    pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+    }
+    
+    pdf.save(`OptiVision-Report-${patient.name.replace(/ /g, '_')}-${scan.date}.pdf`);
+
+    setIsDownloading(false);
   };
 
   const getStatusBadge = () => {
@@ -91,9 +128,9 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
               </div>
               <div className="flex items-center gap-2">
                 {scan.status === 'completed' && (
-                  <Button variant="outline" size="sm" onClick={handlePrint} disabled={isPrinting}>
+                  <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
                     <Printer className="mr-2 h-4 w-4" />
-                    {isPrinting ? 'Preparing...' : 'Print / Download'}
+                    {isDownloading ? 'Downloading...' : 'Download PDF'}
                   </Button>
                 )}
                 {getStatusBadge()}
@@ -173,11 +210,10 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
         </CardContent>
       </Card>
       
-      {isPrinting && (
-        <div className="print-container" ref={reportRef}>
-          <PrintableReport scan={scan} patient={patient} />
-        </div>
-      )}
+      {/* Off-screen container for the printable report */}
+      <div className="absolute -left-[9999px] top-auto w-[800px]" ref={reportRef}>
+        <PrintableReport scan={scan} patient={patient} />
+      </div>
     </>
   );
 }
