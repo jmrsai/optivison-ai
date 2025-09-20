@@ -9,8 +9,7 @@ import { Skeleton } from './ui/skeleton';
 import { AlertCircle, CheckCircle, BrainCircuit, FileText, Loader, Printer } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
-import { useReactToPrint } from 'react-to-print';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { PrintableReport } from './printable-report';
 
 type ScanCardProps = {
@@ -41,11 +40,19 @@ const FailedState = () => (
 )
 
 export function ScanCard({ scan, patient }: ScanCardProps) {
-  const reportRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => reportRef.current,
-    documentTitle: `OptiVision-Report-${patient.name.replace(' ', '_')}-${scan.date}`,
-  });
+  const [isPrinting, setIsPrinting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    
+    // Allow time for the report to render before printing
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    document.title = `OptiVision-Report-${patient.name.replace(/ /g, '_')}-${scan.date}`;
+    window.print();
+    setIsPrinting(false);
+  };
 
   const getStatusBadge = () => {
     switch (scan.status) {
@@ -74,29 +81,29 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-            <div>
-                <CardTitle>Scan from {scan.date}</CardTitle>
-                <CardDescription>Clinical Notes: {scan.clinicalNotes || 'N/A'}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              {scan.status === 'completed' && (
-                <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print / Download
-                </Button>
-              )}
-              {getStatusBadge()}
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {scan.status === 'processing' && <LoadingState />}
-        {scan.status === 'failed' && <FailedState />}
-        {scan.status === 'completed' && scan.analysis && (
-          <>
+    <>
+      <Card className="shadow-sm no-print">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+              <div>
+                  <CardTitle>Scan from {scan.date}</CardTitle>
+                  <CardDescription>Clinical Notes: {scan.clinicalNotes || 'N/A'}</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {scan.status === 'completed' && (
+                  <Button variant="outline" size="sm" onClick={handlePrint} disabled={isPrinting}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    {isPrinting ? 'Preparing...' : 'Print / Download'}
+                  </Button>
+                )}
+                {getStatusBadge()}
+              </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {scan.status === 'processing' && <LoadingState />}
+          {scan.status === 'failed' && <FailedState />}
+          {scan.status === 'completed' && scan.analysis && (
             <div className="grid md:grid-cols-2 gap-6 items-start">
               <div className="w-full aspect-video relative rounded-lg overflow-hidden border">
                 <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} layout="fill" objectFit="contain" data-ai-hint="eye scan" />
@@ -162,14 +169,15 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
                 </TabsContent>
               </Tabs>
             </div>
-             <div className="hidden">
-              <div ref={reportRef}>
-                  <PrintableReport scan={scan} patient={patient} />
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+      
+      {isPrinting && (
+        <div className="print-container" ref={reportRef}>
+          <PrintableReport scan={scan} patient={patient} />
+        </div>
+      )}
+    </>
   );
 }
