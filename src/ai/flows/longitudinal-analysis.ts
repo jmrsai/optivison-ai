@@ -57,7 +57,7 @@ Patient History: {{{patientHistory}}}
 
 You will be provided with a series of scan summaries. Compare the findings from the most recent scan to the previous ones. Identify any new abnormalities, changes in existing conditions (e.g., increased optic nerve cupping, new drusen), or signs of stability.
 
-Based on this trend analysis, provide a comprehensive summary that describes the disease's trajectory. Conclude with a risk assessment for future progression and suggest if the current management plan needs adjustment.
+Based on this trend analysis, provide a comprehensive, accurate, and detailed summary that describes the disease's trajectory. Conclude with a risk assessment for future progression and suggest if the current management plan needs adjustment.
 
 For the 'chartData' output, create a data point for each scan. Convert the risk level to a numerical score: 'Low' = 1, 'Medium' = 2, 'High' = 3. Format the date as 'YYYY-MM-DD' and ensure the final array is sorted chronologically from oldest to newest.
 

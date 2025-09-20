@@ -79,7 +79,7 @@ Patient History: {{{patientHistory}}}
 Clinical Notes: {{{clinicalNotes}}}
 Eye Scan: {{media url=eyeScanDataUri}}
 
-Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), a detailed risk assessment, a risk level ('Low', 'Medium', or 'High'), treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
+Based on all the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases. Fill out all fields in the output schema with highly detailed and accurate information, including diagnostic insights, potential abnormalities, differential diagnosis, early signs of disease, prevention suggestions, disease staging (if applicable), a detailed risk assessment, a risk level ('Low', 'Medium', or 'High'), treatment suggestions, a detailed follow-up plan, a confidence level, and recommendations for next steps.`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
   output: {schema: GeneratePatientReportOutputSchema},
   prompt: `You are an expert medical scribe specializing in ophthalmology. Your task is to generate a comprehensive, professional, A-to-Z patient report suitable for medical records.
 
-Use all the provided information to create a structured report. The output must be plain text, using markdown-like headers for sections.
+Use all the provided information to create a structured report. The output must be plain text, using markdown-like headers for sections. Ensure every section is filled with accurate and detailed information derived from the analysis.
 
 **Patient Information:**
 - Name: {{{patientName}}}
