@@ -10,10 +10,14 @@ import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
 import { saveScan } from '@/lib/storage';
-import { generateLongitudinalAnalysis } from '@/ai/flows/longitudinal-analysis';
+import { generateLongitudinalAnalysis, LongitudinalAnalysisOutput } from '@/ai/flows/longitudinal-analysis';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { format } from 'date-fns';
+
 
 type PatientAnalysisProps = {
   patient: Patient;
@@ -21,11 +25,18 @@ type PatientAnalysisProps = {
   onPatientUpdate: (patient: Patient) => void;
 };
 
+const chartConfig = {
+  riskScore: {
+    label: "Risk Score",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig
+
 export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: PatientAnalysisProps) {
   const [scans, setScans] = useState<Scan[]>(initialScans);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
-  const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<string | null>(null);
+  const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<LongitudinalAnalysisOutput | null>(null);
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
 
   const handleNewAnalysis = async ({
@@ -136,9 +147,10 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                 date: s.date,
                 diagnosticInsights: s.analysis!.diagnosticInsights,
                 potentialAbnormalities: s.analysis!.potentialAbnormalities,
+                riskLevel: s.analysis!.riskLevel
             }))
         });
-        setLongitudinalAnalysis(result.longitudinalSummary);
+        setLongitudinalAnalysis(result);
     } catch(error) {
         console.error("Longitudinal analysis failed:", error);
         toast({
@@ -157,7 +169,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         <Card>
           <CardHeader>
             <CardTitle>Longitudinal Progression Analysis</CardTitle>
-            <CardDescription>Analyze changes across all completed scans to identify trends and predict disease progression.</CardDescription>
+            <CardDescription>Analyze changes across all completed scans to identify trends and disease progression.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLongitudinalLoading ? (
@@ -167,7 +179,45 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                     <Skeleton className="h-4 w-3/4" />
                 </div>
             ) : longitudinalAnalysis ? (
-              <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">{longitudinalAnalysis}</div>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">{longitudinalAnalysis.longitudinalSummary}</div>
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Risk Progression Over Time</h4>
+                     <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                       <BarChart data={longitudinalAnalysis.chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                         <CartesianGrid vertical={false} />
+                         <XAxis 
+                            dataKey="date" 
+                            tickLine={false} 
+                            axisLine={false} 
+                            tickMargin={8} 
+                            tickFormatter={(value) => format(new Date(value), "MMM yyyy")}
+                          />
+                         <YAxis 
+                            dataKey="riskScore" 
+                            tickLine={false} 
+                            axisLine={false} 
+                            tickMargin={8}
+                            domain={[0, 3]}
+                            ticks={[1, 2, 3]}
+                            tickFormatter={(value) => ['Low', 'Medium', 'High'][value-1]}
+                         />
+                         <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent 
+                            labelFormatter={(label) => format(new Date(label), "PPP")}
+                            formatter={(value, name, item) => (
+                               <div className="flex flex-col">
+                                <span>Risk: {['Low', 'Medium', 'High'][item.payload.riskScore - 1]}</span>
+                              </div>
+                            )}
+                          />}
+                        />
+                         <Bar dataKey="riskScore" fill="var(--color-riskScore)" radius={4} />
+                       </BarChart>
+                     </ChartContainer>
+                  </div>
+                </div>
             ) : (
                 <div className="flex flex-col items-center justify-center text-center gap-4 p-8 border-2 border-dashed rounded-lg">
                     <TrendingUp className="h-12 w-12 text-muted-foreground" />

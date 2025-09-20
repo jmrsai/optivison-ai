@@ -17,18 +17,19 @@ type PatientListProps = {
 export function PatientList({ patients }: PatientListProps) {
   const router = useRouter();
 
-  const getRiskBadgeVariant = (riskLevel: Patient['riskLevel']) => {
+  const getRiskBadgeClass = (riskLevel: Patient['riskLevel']) => {
     switch (riskLevel) {
       case 'High':
-        return 'destructive';
+        return 'bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20';
       case 'Medium':
-        return 'secondary';
+        return 'bg-yellow-400/10 text-yellow-500 border-yellow-400/20 hover:bg-yellow-400/20 dark:text-yellow-400';
       case 'Low':
-        return 'default';
+        return 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 dark:text-green-400';
       default:
-        return 'outline';
+        return 'bg-muted text-muted-foreground border-transparent';
     }
   };
+
 
   if (patients.length === 0) {
     return (
@@ -76,14 +77,11 @@ export function PatientList({ patients }: PatientListProps) {
               <TableCell className="hidden lg:table-cell">{patient.lastVisit}</TableCell>
               <TableCell>
                 <Badge
+                  variant="outline"
                   className={cn(
                     'capitalize',
-                    getRiskBadgeVariant(patient.riskLevel) === 'default' &&
-                      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200',
-                    getRiskBadgeVariant(patient.riskLevel) === 'secondary' &&
-                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border-yellow-200',
+                    getRiskBadgeClass(patient.riskLevel)
                   )}
-                  variant={getRiskBadgeVariant(patient.riskLevel)}
                 >
                   {patient.riskLevel}
                 </Badge>
