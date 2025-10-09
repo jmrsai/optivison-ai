@@ -1,7 +1,16 @@
+'use server';
+/**
+ * @fileOverview A file for initializing the Genkit AI instance.
+ */
 import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+import {googleAI} from '@genkit-ai/google-genai';
 
 export const ai = genkit({
-  plugins: [googleAI()],
-  model: 'googleai/gemini-2.5-pro',
+  plugins: [
+    googleAI({
+      apiVersion: 'v1beta',
+    }),
+  ],
+  logLevel: 'debug',
+  enableTracing: true,
 });

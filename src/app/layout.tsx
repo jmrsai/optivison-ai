@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import './main.css';
 
 export const metadata: Metadata = {
   title: 'OptiVision AI',
