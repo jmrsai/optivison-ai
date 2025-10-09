@@ -44,7 +44,7 @@ export function FileUploader({ onFileSelect }: FileUploaderProps) {
     <div>
       {preview ? (
         <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-dashed border-primary/50">
-          <Image src={preview} alt="Scan preview" layout="fill" objectFit="contain" />
+          <Image src={preview} alt="Scan preview" fill objectFit="contain" />
           <Button
             variant="destructive"
             size="icon"

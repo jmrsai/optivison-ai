@@ -206,11 +206,15 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                           cursor={false}
                           content={<ChartTooltipContent 
                             labelFormatter={(label) => format(new Date(label), "PPP")}
-                            formatter={(value, name, item) => (
-                               <div className="flex flex-col">
-                                <span>Risk: {['Low', 'Medium', 'High'][item.payload.riskScore - 1]}</span>
-                              </div>
-                            )}
+                            formatter={(value, name, item) => {
+                              if (item.payload) {
+                                return (
+                                  <div className="flex flex-col">
+                                    <span>Risk: {['Low', 'Medium', 'High'][item.payload.riskScore - 1]}</span>
+                                  </div>
+                                )
+                              }
+                            }}
                           />}
                         />
                          <Bar dataKey="riskScore" fill="var(--color-riskScore)" radius={4} />

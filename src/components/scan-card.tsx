@@ -143,7 +143,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
           {scan.status === 'completed' && scan.analysis && (
             <div className="grid md:grid-cols-2 gap-6 items-start">
               <div className="w-full aspect-video relative rounded-lg overflow-hidden border">
-                <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} layout="fill" objectFit="contain" data-ai-hint="eye scan" />
+                <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
               </div>
 
               <Tabs defaultValue="insights" className="w-full">
