@@ -15,15 +15,17 @@ import { FileUploader } from '@/components/file-uploader';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from './ui/separator';
 
 type NewAnalysisSheetProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSubmit: (data: { imageFile: File; clinicalNotes: string }) => void;
+  onSubmit: (data: { imageFile: File; clinicalNotes: string, documentFile: File | null }) => void;
 };
 
 export function NewAnalysisSheet({ isOpen, onOpenChange, onSubmit }: NewAnalysisSheetProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [clinicalNotes, setClinicalNotes] = useState('');
   const { toast } = useToast();
 
@@ -36,9 +38,10 @@ export function NewAnalysisSheet({ isOpen, onOpenChange, onSubmit }: NewAnalysis
         });
         return;
     }
-    onSubmit({ imageFile, clinicalNotes });
+    onSubmit({ imageFile, clinicalNotes, documentFile });
     // Reset form
     setImageFile(null);
+    setDocumentFile(null);
     setClinicalNotes('');
   };
 
@@ -48,22 +51,33 @@ export function NewAnalysisSheet({ isOpen, onOpenChange, onSubmit }: NewAnalysis
         <SheetHeader>
           <SheetTitle>New AI Analysis</SheetTitle>
           <SheetDescription>
-            Upload a new eye scan. Our advanced deep learning models will analyze the scan and generate a detailed report.
+            Upload a new eye scan and optionally include a supporting medical document. Our AI will analyze them to generate a detailed report.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-6">
           <div className="grid gap-2">
-            <Label htmlFor="scan-image">Eye Scan Image</Label>
+            <Label htmlFor="scan-image">1. Eye Scan Image (Required)</Label>
             <FileUploader onFileSelect={setImageFile} />
           </div>
+
+          <Separator />
+          
           <div className="grid gap-2">
-            <Label htmlFor="clinical-notes">Clinical Notes</Label>
+            <Label htmlFor="scan-image">2. Medical Document (Optional)</Label>
+            <FileUploader onFileSelect={setDocumentFile} />
+            <p className="text-xs text-muted-foreground">Upload a PDF or image of a report for additional context.</p>
+          </div>
+
+          <Separator />
+          
+          <div className="grid gap-2">
+            <Label htmlFor="clinical-notes">3. Clinical Notes (Optional)</Label>
             <Textarea
               id="clinical-notes"
               placeholder="Enter any clinical observations, patient symptoms, etc."
               value={clinicalNotes}
               onChange={(e) => setClinicalNotes(e.target.value)}
-              rows={5}
+              rows={4}
             />
           </div>
         </div>

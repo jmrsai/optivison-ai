@@ -7,6 +7,7 @@ import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
 import { ScanCard } from '@/components/scan-card';
 import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
+import { analyzeDocument } from '@/ai/flows/document-analysis';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
 import { saveScan, savePatient } from '@/lib/storage';
@@ -46,84 +47,120 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   const handleNewAnalysis = async ({
     imageFile,
     clinicalNotes,
+    documentFile,
   }: {
     imageFile: File;
     clinicalNotes: string;
+    documentFile: File | null;
   }) => {
     setSheetOpen(false);
 
-    const reader = new FileReader();
-    reader.readAsDataURL(imageFile);
-    reader.onload = async () => {
-      const scanImage = reader.result as string;
-      const tempId = `scan-${Date.now()}`;
-      const scanDate = new Date().toISOString().split('T')[0];
+    const tempId = `scan-${Date.now()}`;
+    const scanDate = new Date().toISOString().split('T')[0];
 
-      const newScanPlaceholder: Scan = {
-        id: tempId,
-        patientId: patient.id,
-        date: scanDate,
-        imageUrl: URL.createObjectURL(imageFile),
-        clinicalNotes,
-        status: 'processing',
-      };
-      
-      setScans(prevScans => [newScanPlaceholder, ...prevScans]);
+    const newScanPlaceholder: Scan = {
+      id: tempId,
+      patientId: patient.id,
+      date: scanDate,
+      imageUrl: URL.createObjectURL(imageFile),
+      clinicalNotes,
+      status: 'processing',
+    };
+    
+    setScans(prevScans => [newScanPlaceholder, ...prevScans]);
 
-      try {
-        const analysisResult = await analyzeEyeScan({
-          eyeScanDataUri: scanImage,
-          patientHistory: patient.history,
-          clinicalNotes: clinicalNotes,
-        });
-        
-        const finalScan: Scan = {
-          ...newScanPlaceholder,
-          imageUrl: scanImage, 
-          analysis: analysisResult,
-          report: 'Generating report...', // Placeholder
-          status: 'completed'
-        };
-        
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s)));
-
-        const reportResult = await generatePatientReport({
-            patientName: patient.name,
-            patientAge: patient.age,
-            patientGender: patient.gender,
-            scanDate: scanDate,
-            clinicalNotes: clinicalNotes,
-            analysis: analysisResult,
-            patientHistory: patient.history,
-        });
-
-        finalScan.report = reportResult.report;
-        
-        saveScan(finalScan);
-        setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
-        
-        if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
-            const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
-            onPatientUpdate(updatedPatient);
+    try {
+        // Step 1: Analyze document if it exists
+        let documentAnalysisResult;
+        if (documentFile) {
+            const docReader = new FileReader();
+            docReader.readAsDataURL(documentFile);
+            await new Promise<void>((resolve) => {
+                docReader.onload = async () => {
+                    const docDataUri = docReader.result as string;
+                    documentAnalysisResult = await analyzeDocument({ documentDataUri: docDataUri });
+                    resolve();
+                };
+                docReader.onerror = (error) => {
+                    console.error("Document reading failed:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Document Read Error",
+                        description: "Could not read the uploaded document.",
+                    });
+                    // Mark scan as failed
+                    const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
+                    saveScan(failedScan);
+                    setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
+                    resolve(); // Resolve to not block forever
+                }
+            });
         }
+        
+        // Step 2: Analyze eye scan
+        const imageReader = new FileReader();
+        imageReader.readAsDataURL(imageFile);
+        imageReader.onload = async () => {
+            const eyeScanDataUri = imageReader.result as string;
+        
+            const analysisResult = await analyzeEyeScan({
+                eyeScanDataUri: eyeScanDataUri,
+                patientHistory: patient.history,
+                clinicalNotes: clinicalNotes,
+                documentAnalysis: documentAnalysisResult,
+            });
+            
+            const finalScan: Scan = {
+                ...newScanPlaceholder,
+                imageUrl: eyeScanDataUri, 
+                analysis: analysisResult,
+                report: 'Generating report...', // Placeholder
+                status: 'completed'
+            };
+            
+            setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult, imageUrl: eyeScanDataUri } : s)));
 
-        toast({
-          title: "Analysis Complete",
-          description: "AI analysis and full report have been generated.",
-        });
+            // Step 3: Generate the final report
+            const reportResult = await generatePatientReport({
+                patientName: patient.name,
+                patientAge: patient.age,
+                patientGender: patient.gender,
+                scanDate: scanDate,
+                clinicalNotes: clinicalNotes,
+                analysis: analysisResult,
+                patientHistory: patient.history,
+            });
 
-      } catch (error) {
-        console.error("AI analysis failed:", error);
+            finalScan.report = reportResult.report;
+            
+            saveScan(finalScan);
+            setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
+            
+            // Step 4: Update patient risk level
+            if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
+                const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
+                onPatientUpdate(updatedPatient);
+            }
+
+            toast({
+                title: "Analysis Complete",
+                description: "AI analysis and full report have been generated.",
+            });
+        };
+        imageReader.onerror = (error) => {
+             throw new Error("Failed to read image file.");
+        }
+    } catch (error) {
+        console.error("AI analysis pipeline failed:", error);
         const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
         saveScan(failedScan);
         setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
         toast({
-          variant: "destructive",
-          title: "Analysis Failed",
-          description: "An error occurred during the AI analysis.",
+            variant: "destructive",
+            title: "Analysis Failed",
+            description: "An error occurred during the AI analysis pipeline.",
         });
-      }
-    };
+    }
   };
   
   const runLongitudinalAnalysis = async () => {

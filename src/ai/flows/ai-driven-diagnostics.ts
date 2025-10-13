@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { DocumentAnalysisOutputSchema } from './document-analysis';
 
 const AnalyzeEyeScanInputSchema = z.object({
   eyeScanDataUri: z
@@ -25,6 +26,7 @@ const AnalyzeEyeScanInputSchema = z.object({
     .string()
     .optional()
     .describe('Any clinical notes or observations about the patient.'),
+  documentAnalysis: DocumentAnalysisOutputSchema.optional().describe('Analysis from an external medical document.')
 });
 export type AnalyzeEyeScanInput = z.infer<typeof AnalyzeEyeScanInputSchema>;
 
@@ -73,17 +75,26 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist AI, powered by state-of-the-art deep learning models trained on millions of retinal scans. Your task is to perform a comprehensive, A-to-Z analysis of an eye scan image. Your analysis should be equivalent to a deep learning-powered clinical decision support system.
+  prompt: `You are an expert ophthalmologist AI, powered by a state-of-the-art deep learning-powered clinical decision support system. Your task is to perform a comprehensive, A-to-Z analysis of an eye scan image, correlating it with patient history and any provided medical documents.
 
 **Workflow:**
-1.  **Image Analysis**: Process the input image to perform segmentation of key structures (optic nerve, macula, blood vessels) and extract relevant features and biomarkers.
-2.  **Pattern Recognition**: Compare the extracted features against known patterns of ophthalmic diseases.
-3.  **Diagnosis and Reporting**: Generate a detailed report based on the findings.
+1.  **Image Analysis**: Process the input eye scan image to perform segmentation of key structures (optic nerve, macula, blood vessels) and extract relevant features and biomarkers.
+2.  **Correlate with Documents**: If an analysis of a medical document is provided, use its findings (diagnoses, medications, etc.) to inform your eye scan analysis.
+3.  **Pattern Recognition**: Compare the extracted features against known patterns of ophthalmic diseases.
+4.  **Diagnosis and Reporting**: Generate a detailed report based on all available information.
 
 **Patient Information:**
-Patient History: {{{patientHistory}}}
-Clinical Notes: {{{clinicalNotes}}}
-Eye Scan: {{media url=eyeScanDataUri}}
+- Patient History: {{{patientHistory}}}
+- Clinical Notes: {{{clinicalNotes}}}
+- Eye Scan: {{media url=eyeScanDataUri}}
+
+{{#if documentAnalysis}}
+**External Medical Document Analysis Summary:**
+- Diagnoses Mentioned: {{#if documentAnalysis.diagnoses.length}} {{#each documentAnalysis.diagnoses}} {{{this}}}{{#unless @last}}, {{/unless}}{{/each}} {{else}}None{{/if}}
+- Medications Mentioned: {{#if documentAnalysis.medications.length}} {{#each documentAnalysis.medications}} {{{this}}}{{#unless @last}}, {{/unless}}{{/each}} {{else}}None{{/if}}
+- Key Recommendations: {{{documentAnalysis.recommendations}}}
+{{/if}}
+
 
 **Analysis Task:**
 Based on the provided information, perform a full diagnostic analysis. Pay special attention to early detection of diseases by identifying subtle biomarkers. Fill out all fields in the output schema with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical, suitable for a medical expert. Reference the deep learning model's findings (e.g., "segmentation reveals...", "feature extraction identified...").`,
