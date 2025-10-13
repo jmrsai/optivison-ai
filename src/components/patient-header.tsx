@@ -24,17 +24,17 @@ const getRiskBadgeClass = (riskLevel: Patient['riskLevel']) => {
 export function PatientHeader({ patient }: PatientHeaderProps) {
   return (
     <Card className="overflow-hidden shadow-sm no-print">
-      <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 bg-muted/50 p-6">
+      <CardHeader className="flex flex-col md:flex-row items-center gap-6 bg-muted/50 p-6">
         <Avatar className="h-24 w-24 border-2 border-white">
           <AvatarImage src={patient.avatarUrl} alt={patient.name} />
           <AvatarFallback className="text-3xl">{patient.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
-            <div className="grid gap-1">
-              <h1 className="text-3xl font-bold">{patient.name}</h1>
-              <p className="text-muted-foreground">Patient ID: {patient.id}</p>
+        <div className="flex-1 grid md:grid-cols-2 gap-x-4 gap-y-2 w-full">
+            <div className="grid gap-1 md:col-span-2">
+              <h1 className="text-2xl md:text-3xl font-bold">{patient.name}</h1>
+              <p className="text-sm text-muted-foreground">Patient ID: {patient.id}</p>
             </div>
-             <div className="grid grid-cols-2 gap-4 text-sm pt-2">
+             <div className="grid grid-cols-2 gap-4 text-sm pt-2 md:col-span-2">
                 <div>
                     <p className="font-medium text-muted-foreground">Age</p>
                     <p className="font-semibold text-base">{patient.age}</p>

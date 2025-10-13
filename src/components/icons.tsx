@@ -14,7 +14,6 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
     >
       <path d="M12 5C5.636 5 2 12 2 12s3.636 7 10 7 10-7 10-7-3.636-7-10-7z" />
       <circle cx="12" cy="12" r="3" />
-      <path d="M12 12L16 8" />
     </svg>
   );
 }

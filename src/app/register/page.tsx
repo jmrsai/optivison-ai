@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useToast } from "@/hooks/use-toast"
+import placeholderImages from '@/lib/placeholder-images.json';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),

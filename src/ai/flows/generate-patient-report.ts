@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { AnalyzeEyeScanOutput } from './ai-driven-diagnostics';
+import type { AnalyzeEyeScanOutput } from '@/ai/flows/ai-driven-diagnostics';
 
 
 const GeneratePatientReportInputSchema = z.object({

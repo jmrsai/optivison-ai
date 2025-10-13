@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -7,7 +7,18 @@ import './main.css';
 export const metadata: Metadata = {
   title: 'OptiVision AI',
   description: 'An advanced ophthalmology EHR leveraging deep learning to assist clinicians with diagnostic insights and patient management.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'OptiVision AI',
+  },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
+};
+
 
 export default function RootLayout({
   children,

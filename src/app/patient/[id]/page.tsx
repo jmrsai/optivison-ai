@@ -12,7 +12,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
-function PatientDetailView({ id }: { id: string }) {
+export default function PatientPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +28,8 @@ function PatientDetailView({ id }: { id: string }) {
   }, [id]);
 
   const handlePatientUpdate = useCallback((updatedPatient: Patient) => {
-    setPatient(updatedPatient);
     savePatient(updatedPatient);
+    setPatient(updatedPatient);
   }, []);
 
   if (loading) {
@@ -69,9 +70,4 @@ function PatientDetailView({ id }: { id: string }) {
       </main>
     </div>
   );
-}
-
-export default function PatientPage({ params }: { params: { id: string } }) {
-  const { id } = params;
-  return <PatientDetailView id={id} />;
 }

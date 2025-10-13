@@ -1,0 +1,51 @@
+{
+  "userAvatar": {
+    "src": "https://picsum.photos/id/1/100/100",
+    "seed": "1",
+    "width": 100,
+    "height": 100,
+    "alt": "User Avatar"
+  },
+  "patient1": {
+    "src": "https://picsum.photos/seed/p1/100/100",
+    "seed": "p1",
+    "width": 100,
+    "height": 100,
+    "alt": "Patient Avatar"
+  },
+  "patient2": {
+    "src": "https://picsum.photos/seed/p2/100/100",
+    "seed": "p2",
+    "width": 100,
+    "height": 100,
+    "alt": "Patient Avatar"
+  },
+  "patient3": {
+    "src": "https://picsum.photos/seed/p3/100/100",
+    "seed": "p3",
+    "width": 100,
+    "height": 100,
+    "alt": "Patient Avatar"
+  },
+  "patient4": {
+    "src": "https://picsum.photos/seed/p4/100/100",
+    "seed": "p4",
+    "width": 100,
+    "height": 100,
+    "alt": "Patient Avatar"
+  },
+  "scan1": {
+    "src": "https://picsum.photos/seed/scan1/600/400",
+    "seed": "scan1",
+    "width": 600,
+    "height": 400,
+    "alt": "Eye Scan 1"
+  },
+  "scan2": {
+    "src": "https://picsum.photos/seed/scan2/600/400",
+    "seed": "scan2",
+    "width": 600,
+    "height": 400,
+    "alt": "Eye Scan 2"
+  }
+}

@@ -11,8 +11,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, Home, UserPlus, Settings } from 'lucide-react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 
 export function AppHeader() {
@@ -29,13 +30,19 @@ export function AppHeader() {
             <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Dashboard
             </Link>
+             <Link href="/register" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              Register Patient
+            </Link>
+             <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              Settings
+            </Link>
           </nav>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="https://picsum.photos/id/1/100/100" alt="@drcarter" />
+                  <AvatarImage src={placeholderImages.userAvatar.src} alt={placeholderImages.userAvatar.alt} />
                   <AvatarFallback>DC</AvatarFallback>
                 </Avatar>
               </Button>
@@ -63,22 +70,24 @@ export function AppHeader() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
-                <SheetHeader>
-                  <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
+            <SheetContent side="left" className="w-[300px]">
+                <SheetHeader className="border-b pb-4">
+                   <Link href="/" className="flex items-center gap-2">
+                    <Logo className="h-7 w-7 text-primary" />
+                    <span className="text-lg font-bold text-foreground">OptiVision AI</span>
+                  </Link>
                 </SheetHeader>
-               <nav className="grid gap-6 text-lg font-medium mt-8">
-                <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                  <Logo className="h-6 w-6" />
-                  <span>OptiVision AI</span>
-                </Link>
-                <Link href="/" className="hover:text-foreground">
+               <nav className="grid gap-2 text-lg font-medium mt-6">
+                <Link href="/" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                  <Home className="h-5 w-5" />
                   Dashboard
                 </Link>
-                 <Link href="/register" className="hover:text-foreground">
+                 <Link href="/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                  <UserPlus className="h-5 w-5" />
                   Register Patient
                 </Link>
-                <Link href="/settings" className="hover:text-foreground">
+                <Link href="/settings" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                  <Settings className="h-5 w-5" />
                   Settings
                 </Link>
               </nav>

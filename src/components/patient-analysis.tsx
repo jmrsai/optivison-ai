@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
@@ -9,7 +9,7 @@ import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
-import { saveScan } from '@/lib/storage';
+import { saveScan, savePatient } from '@/lib/storage';
 import { generateLongitudinalAnalysis, LongitudinalAnalysisOutput } from '@/ai/flows/longitudinal-analysis';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
@@ -39,6 +39,10 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<LongitudinalAnalysisOutput | null>(null);
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
 
+  useEffect(() => {
+    setScans(initialScans);
+  }, [initialScans]);
+
   const handleNewAnalysis = async ({
     imageFile,
     clinicalNotes,
@@ -64,21 +68,25 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         status: 'processing',
       };
       
-      const newScans = [newScanPlaceholder, ...scans];
-      setScans(newScans);
+      setScans(prevScans => [newScanPlaceholder, ...prevScans]);
 
       try {
-        // Step 1: AI Diagnostics
         const analysisResult = await analyzeEyeScan({
           eyeScanDataUri: scanImage,
           patientHistory: patient.history,
           clinicalNotes: clinicalNotes,
         });
         
-        const updateWithAnalysis = newScans.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s));
-        setScans(updateWithAnalysis);
+        const finalScan: Scan = {
+          ...newScanPlaceholder,
+          imageUrl: scanImage, 
+          analysis: analysisResult,
+          report: 'Generating report...', // Placeholder
+          status: 'completed'
+        };
+        
+        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult } : s)));
 
-        // Step 2: Full Report
         const reportResult = await generatePatientReport({
             patientName: patient.name,
             patientAge: patient.age,
@@ -88,25 +96,16 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             analysis: analysisResult,
             patientHistory: patient.history,
         });
+
+        finalScan.report = reportResult.report;
         
-        // Step 3: Update patient risk level
+        saveScan(finalScan);
+        setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
+        
         if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
             const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
             onPatientUpdate(updatedPatient);
         }
-
-        const finalScan: Scan = {
-          ...newScanPlaceholder,
-          imageUrl: scanImage, // Save the data URI instead of blob URL
-          analysis: analysisResult,
-          report: reportResult.report,
-          status: 'completed'
-        };
-
-        setScans((prev) =>
-          prev.map((s) => (s.id === tempId ? finalScan : s))
-        );
-        saveScan(finalScan);
 
         toast({
           title: "Analysis Complete",
@@ -116,8 +115,8 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
       } catch (error) {
         console.error("AI analysis failed:", error);
         const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
-        setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
         saveScan(failedScan);
+        setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
         toast({
           variant: "destructive",
           title: "Analysis Failed",
@@ -205,15 +204,17 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                          <ChartTooltip
                           cursor={false}
                           content={<ChartTooltipContent 
-                            labelFormatter={(label) => format(new Date(label), "PPP")}
-                            formatter={(value, name, item) => {
-                              if (item.payload) {
+                            labelFormatter={(value) => format(new Date(value as string), "PPP")}
+                            formatter={(value, name, props) => {
+                              const { payload } = props;
+                              if (payload) {
                                 return (
                                   <div className="flex flex-col">
-                                    <span>Risk: {['Low', 'Medium', 'High'][item.payload.riskScore - 1]}</span>
+                                    <span>Risk: {['Low', 'Medium', 'High'][payload.riskScore - 1]}</span>
                                   </div>
                                 )
                               }
+                              return null;
                             }}
                           />}
                         />

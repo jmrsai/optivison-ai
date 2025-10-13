@@ -1,5 +1,9 @@
 import type { Patient, Scan } from './types';
 import type { AnalyzeEyeScanOutput } from '@/ai/flows/ai-driven-diagnostics';
+import placeholderImages from './placeholder-images.json';
+
+const today = new Date();
+const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
 const mockAnalysis1: AnalyzeEyeScanOutput = {
     diagnosticInsights: 'Optic nerve head shows moderate cupping, and the retinal nerve fiber layer appears thinner than average, which is suggestive of early to moderate-stage glaucoma. No signs of diabetic retinopathy or macular degeneration were detected.',
@@ -38,8 +42,8 @@ export const MOCK_PATIENTS: Patient[] = [
     name: 'John Doe',
     age: 68,
     gender: 'Male',
-    lastVisit: '2024-05-10',
-    avatarUrl: 'https://picsum.photos/seed/p1/100/100',
+    lastVisit: formatDate(new Date(today.setDate(today.getDate() - 45))),
+    avatarUrl: placeholderImages.patient1.src,
     riskLevel: 'Medium',
     history: 'Patient has a family history of glaucoma. Reports occasional blurred vision.'
   },
@@ -48,8 +52,8 @@ export const MOCK_PATIENTS: Patient[] = [
     name: 'Jane Smith',
     age: 72,
     gender: 'Female',
-    lastVisit: '2024-04-22',
-    avatarUrl: 'https://picsum.photos/seed/p2/100/100',
+    lastVisit: formatDate(new Date(today.setDate(today.getDate() - 60))),
+    avatarUrl: placeholderImages.patient2.src,
     riskLevel: 'Low',
     history: 'Diabetic patient (Type 2, 15 years duration), annual check-up for retinopathy. No symptoms reported.'
   },
@@ -58,8 +62,8 @@ export const MOCK_PATIENTS: Patient[] = [
     name: 'Robert Johnson',
     age: 55,
     gender: 'Male',
-    lastVisit: '2024-06-01',
-    avatarUrl: 'https://picsum.photos/seed/p3/100/100',
+    lastVisit: formatDate(new Date(today.setDate(today.getDate() - 30))),
+    avatarUrl: placeholderImages.patient3.src,
     riskLevel: 'High',
     history: 'Diagnosed with wet Age-Related Macular Degeneration (AMD) 2 years ago. Receiving regular anti-VEGF injections.'
   },
@@ -68,8 +72,8 @@ export const MOCK_PATIENTS: Patient[] = [
     name: 'Emily Williams',
     age: 61,
     gender: 'Female',
-    lastVisit: '2024-05-15',
-    avatarUrl: 'https://picsum.photos/seed/p4/100/100',
+    lastVisit: formatDate(new Date(today.setDate(today.getDate() - 90))),
+    avatarUrl: placeholderImages.patient4.src,
     riskLevel: 'N/A',
     history: 'New patient referred for cataract evaluation. Complains of glare and difficulty driving at night.'
   },
@@ -79,8 +83,8 @@ export const MOCK_SCANS: Scan[] = [
   {
     id: 'scan-1',
     patientId: '1',
-    date: '2024-05-10',
-    imageUrl: 'https://picsum.photos/seed/scan1/600/400',
+    date: MOCK_PATIENTS.find(p => p.id === '1')!.lastVisit,
+    imageUrl: placeholderImages.scan1.src,
     clinicalNotes: 'Routine check-up. Patient reports some hazy vision in the left eye.',
     status: 'completed',
     analysis: mockAnalysis1,
@@ -90,7 +94,7 @@ export const MOCK_SCANS: Scan[] = [
 - Gender: Male
 
 **Scan Details:**
-- Date of Scan: 2024-05-10
+- Date of Scan: ${MOCK_PATIENTS.find(p => p.id === '1')!.lastVisit}
 - Clinical Notes: Routine check-up. Patient reports some hazy vision in the left eye.
 
 **Patient Medical History:**
@@ -127,8 +131,8 @@ Patient has a family history of glaucoma. Reports occasional blurred vision.
     {
     id: 'scan-2',
     patientId: '2',
-    date: '2024-04-22',
-    imageUrl: 'https://picsum.photos/seed/scan2/600/400',
+    date: MOCK_PATIENTS.find(p => p.id === '2')!.lastVisit,
+    imageUrl: placeholderImages.scan2.src,
     clinicalNotes: 'Annual diabetic retinopathy screening.',
     status: 'completed',
     analysis: mockAnalysis2,
@@ -138,7 +142,7 @@ Patient has a family history of glaucoma. Reports occasional blurred vision.
 - Gender: Female
 
 **Scan Details:**
-- Date of Scan: 2024-04-22
+- Date of Scan: ${MOCK_PATIENTS.find(p => p.id === '2')!.lastVisit}
 - Clinical Notes: Annual diabetic retinopathy screening.
 
 **Patient Medical History:**
