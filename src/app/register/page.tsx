@@ -43,7 +43,7 @@ export default function RegisterPatientPage() {
       id: `patient-${Date.now()}`,
       ...values,
       lastVisit: new Date().toISOString().split('T')[0],
-      avatarUrl: `https://picsum.photos/seed/${values.name}/100/100`,
+      avatarUrl: placeholderImages.patient4.src,
       riskLevel: 'N/A',
     };
 

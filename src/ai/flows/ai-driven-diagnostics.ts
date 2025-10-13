@@ -60,6 +60,8 @@ const AnalyzeEyeScanOutputSchema = z.object({
     .describe('A detailed plan for patient follow-up, including recommended imaging, tests, and timelines.'),
   confidenceLevel: z
     .number()
+    .min(0)
+    .max(1)
     .describe('The confidence level of the AI model in its primary diagnosis (from 0 to 1).'),
   recommendations: z
     .string()
