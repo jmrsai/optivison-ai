@@ -9,11 +9,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "dependencies": {
-    "@genkit-ai/google-genai": "^0.6.1",
-    "@genkit-ai/next": "^0.6.1",
+    "@genkit-ai/google-genai": "0.6.0",
+    "@genkit-ai/next": "0.6.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -42,7 +43,7 @@
     "dotenv": "^16.4.5",
     "embla-carousel-react": "^8.1.6",
     "firebase": "^10.12.3",
-    "genkit": "^0.6.1",
+    "genkit": "0.6.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "lucide-react": "^0.412.0",
@@ -65,7 +66,7 @@
     "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "genkit-cli": "^0.6.1",
+    "genkit-cli": "0.6.0",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.3"
