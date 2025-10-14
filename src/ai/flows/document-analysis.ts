@@ -20,7 +20,7 @@ const DocumentAnalysisInputSchema = z.object({
 });
 export type DocumentAnalysisInput = z.infer<typeof DocumentAnalysisInputSchema>;
 
-export const DocumentAnalysisOutputSchema = z.object({
+const DocumentAnalysisOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the entire document.'),
   diagnoses: z.array(z.string()).describe('A list of all medical diagnoses mentioned in the document.'),
   medications: z.array(z.string()).describe('A list of all medications mentioned in the document.'),
