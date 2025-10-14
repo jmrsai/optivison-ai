@@ -51,14 +51,14 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     setIsDownloading(true);
 
     const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
         useCORS: true,
         logging: false,
+        backgroundColor: '#ffffff'
     });
     
     const imgData = canvas.toDataURL('image/png');
     
-    // A4 dimensions in points (1 pt = 1/72 inch)
     const pdf = new jsPDF({
         orientation: 'p',
         unit: 'pt',
@@ -69,21 +69,44 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
-    const ratio = canvasWidth / canvasHeight;
-    const imgWidth = pdfWidth - 40; // with some margin
-    const imgHeight = imgWidth / ratio;
+    
+    const canvasAspectRatio = canvasWidth / canvasHeight;
+    const pageAspectRatio = pdfWidth / pdfHeight;
 
-    let heightLeft = imgHeight;
-    let position = 20;
+    let imgWidth, imgHeight;
 
-    pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+    if (canvasAspectRatio > pageAspectRatio) {
+      imgWidth = pdfWidth;
+      imgHeight = pdfWidth / canvasAspectRatio;
+    } else {
+      imgHeight = pdfHeight;
+      imgWidth = pdfHeight * canvasAspectRatio;
+    }
 
-    while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+    let heightLeft = canvasHeight;
+    let position = 0;
+
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = canvasWidth;
+    pageCanvas.height = canvas.height * (pdfHeight/imgHeight);
+
+    const pageCtx = pageCanvas.getContext('2d');
+
+    if (!pageCtx) {
+      setIsDownloading(false);
+      return;
+    }
+    
+    let pageCount = 0;
+    while(heightLeft > 0) {
+      pageCtx.fillStyle = 'white';
+      pageCtx.fillRect(0,0,pageCanvas.width, pageCanvas.height);
+      pageCtx.drawImage(canvas, 0, heightLeft * -1, canvasWidth, canvas.height);
+
+      if (pageCount > 0) pdf.addPage();
+      pdf.addImage(pageCanvas, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      heightLeft -= pageCanvas.height;
+      pageCount++;
     }
     
     pdf.save(`OptiVision-Report-${patient.name.replace(/ /g, '_')}-${scan.date}.pdf`);
@@ -95,7 +118,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     switch (scan.status) {
       case 'completed':
         return (
-          <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <Badge variant="default" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
             Completed
           </Badge>
@@ -119,7 +142,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
 
   return (
     <>
-      <Card className="shadow-sm no-print">
+      <Card className="shadow-sm">
         <CardHeader>
           <div className="flex justify-between items-start">
               <div>
@@ -127,12 +150,6 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
                   <CardDescription>Clinical Notes: {scan.clinicalNotes || 'N/A'}</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {scan.status === 'completed' && (
-                  <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    {isDownloading ? 'Downloading...' : 'Download PDF'}
-                  </Button>
-                )}
                 {getStatusBadge()}
               </div>
           </div>
@@ -141,78 +158,55 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
           {scan.status === 'processing' && <LoadingState />}
           {scan.status === 'failed' && <FailedState />}
           {scan.status === 'completed' && scan.analysis && (
-            <div className="grid md:grid-cols-2 gap-6 items-start">
-              <div className="w-full aspect-video relative rounded-lg overflow-hidden border">
-                <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
-              </div>
-
-              <Tabs defaultValue="insights" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="insights"><BrainCircuit className="mr-1 h-4 w-4" />AI Analysis</TabsTrigger>
-                  <TabsTrigger value="report"><FileText className="mr-1 h-4 w-4" />Full Report</TabsTrigger>
+            <Tabs defaultValue="insights" className="w-full">
+               <div className='flex justify-between items-center border-b mb-4'>
+                <TabsList className="grid grid-cols-2 w-full max-w-sm">
+                    <TabsTrigger value="insights"><BrainCircuit className="mr-1 h-4 w-4" />AI Analysis</TabsTrigger>
+                    <TabsTrigger value="report"><FileText className="mr-1 h-4 w-4" />Full Report</TabsTrigger>
                 </TabsList>
-                <TabsContent value="insights" className="mt-4 prose prose-sm max-w-none">
-                  <h4 className="font-bold">Diagnostic Insights</h4>
-                  <p>{scan.analysis.diagnosticInsights}</p>
-                  
-                  <h4 className="font-bold mt-4">Potential Abnormalities</h4>
-                  {scan.analysis.potentialAbnormalities?.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {scan.analysis.potentialAbnormalities.map((ab, i) => <li key={i}>{ab}</li>)}
-                    </ul>
-                  ) : <p>None identified.</p>}
+                <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    {isDownloading ? 'Downloading...' : 'Download PDF'}
+                </Button>
+               </div>
+              <div className="grid md:grid-cols-2 gap-6 items-start mt-4">
+                <div className="w-full aspect-video relative rounded-lg overflow-hidden border">
+                  <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
+                </div>
 
-                  <h4 className="font-bold mt-4">Differential Diagnosis</h4>
-                  {scan.analysis.differentialDiagnosis?.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {scan.analysis.differentialDiagnosis.map((ab, i) => <li key={i}>{ab}</li>)}
-                    </ul>
-                  ) : <p>None noted.</p>}
+                <div>
+                  <TabsContent value="insights" className="mt-0 prose prose-sm dark:prose-invert max-w-none">
+                    <h4>Diagnostic Insights</h4>
+                    <p>{scan.analysis.diagnosticInsights}</p>
+                    
+                    <h4>Potential Abnormalities</h4>
+                    {scan.analysis.potentialAbnormalities?.length > 0 ? (
+                      <ul>
+                        {scan.analysis.potentialAbnormalities.map((ab, i) => <li key={i}>{ab}</li>)}
+                      </ul>
+                    ) : <p>None identified.</p>}
 
-                   <h4 className="font-bold mt-4">Early Signs Detected</h4>
-                  {scan.analysis.earlySigns?.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {scan.analysis.earlySigns.map((sign, i) => <li key={i}>{sign}</li>)}
-                    </ul>
-                  ) : <p>None identified.</p>}
+                    <h4>Recommendations</h4>
+                    <p>{scan.analysis.recommendations}</p>
 
-                  <h4 className="font-bold mt-4">Prevention Suggestions</h4>
-                  {scan.analysis.preventionSuggestions?.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {scan.analysis.preventionSuggestions.map((suggestion, i) => <li key={i}>{suggestion}</li>)}
-                    </ul>
-                  ) : <p>None provided.</p>}
-                  
-                  {scan.analysis.diseaseStaging && <>
-                    <h4 className="font-bold mt-4">Disease Staging</h4>
-                    <p>{scan.analysis.diseaseStaging}</p>
-                  </>}
-
-                   <h4 className="font-bold mt-4">Treatment Suggestions</h4>
-                  {scan.analysis.treatmentSuggestions?.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {scan.analysis.treatmentSuggestions.map((suggestion, i) => <li key={i}>{suggestion}</li>)}
-                    </ul>
-                  ) : <p>None provided.</p>}
-                  
-                  <h4 className="font-bold mt-4">Confidence</h4>
-                  <p>{(scan.analysis.confidenceLevel * 100).toFixed(0)}%</p>
-                  
-                  <h4 className="font-bold mt-4">Recommendations</h4>
-                  <p>{scan.analysis.recommendations}</p>
-                </TabsContent>
-                <TabsContent value="report" className="mt-4 prose prose-sm max-w-none whitespace-pre-wrap font-mono text-xs bg-muted p-4 rounded-md">
-                  {scan.report}
-                </TabsContent>
-              </Tabs>
-            </div>
+                    <h4>Confidence</h4>
+                    <p>{(scan.analysis.confidenceLevel * 100).toFixed(0)}%</p>
+                  </TabsContent>
+                  <TabsContent value="report" className="mt-0 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap font-mono text-xs bg-muted p-4 rounded-md">
+                    {scan.report}
+                  </TabsContent>
+                </div>
+              </div>
+            </Tabs>
           )}
         </CardContent>
       </Card>
       
       {/* Off-screen container for the printable report */}
-      <div className="absolute -left-[9999px] top-auto w-[800px]" ref={reportRef}>
-        <PrintableReport scan={scan} patient={patient} />
+      <div className="absolute -left-[9999px] top-auto" style={{width: 800}}>
+        <div ref={reportRef}>
+          <PrintableReport scan={scan} patient={patient} />
+        </div>
       </div>
     </>
   );

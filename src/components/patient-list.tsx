@@ -79,7 +79,7 @@ export function PatientList({ patients }: PatientListProps) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    'capitalize',
+                    'capitalize font-semibold',
                     getRiskBadgeClass(patient.riskLevel)
                   )}
                 >
@@ -87,9 +87,11 @@ export function PatientList({ patients }: PatientListProps) {
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/patient/${patient.id}`)}}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Record
+                <Button variant="ghost" size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                    <Link href={`/patient/${patient.id}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Record
+                    </Link>
                 </Button>
               </TableCell>
             </TableRow>

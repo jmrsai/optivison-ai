@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
 import { ScanCard } from '@/components/scan-card';
 import { PlusCircle } from 'lucide-react';
-import { analyzeEyeScan, AnalyzeEyeScanOutput } from '@/ai/flows/ai-driven-diagnostics';
+import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { analyzeDocument, DocumentAnalysisOutput } from '@/ai/flows/document-analysis';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
-import { saveScan, savePatient } from '@/lib/storage';
+import { saveScan } from '@/lib/storage';
 import { generateLongitudinalAnalysis, LongitudinalAnalysisOutput } from '@/ai/flows/longitudinal-analysis';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
@@ -18,6 +18,7 @@ import { Skeleton } from './ui/skeleton';
 import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
+import { fileToDataUri } from '@/lib/utils';
 
 
 type PatientAnalysisProps = {
@@ -32,15 +33,6 @@ const chartConfig = {
     color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
-
-function fileToDataUri(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
 
 
 export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: PatientAnalysisProps) {
@@ -180,7 +172,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   }
 
   return (
-    <div className="no-print space-y-8">
+    <div className="space-y-8">
       {scans.filter(s => s.status === 'completed').length > 1 && (
         <Card>
           <CardHeader>
@@ -196,7 +188,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                 </div>
             ) : longitudinalAnalysis ? (
                 <div className="grid md:grid-cols-2 gap-8">
-                  <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">{longitudinalAnalysis.longitudinalSummary}</div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 whitespace-pre-wrap">{longitudinalAnalysis.longitudinalSummary}</div>
                   <div>
                     <h4 className="text-sm font-medium mb-2">Risk Progression Over Time</h4>
                      <ChartContainer config={chartConfig} className="h-[250px] w-full">
