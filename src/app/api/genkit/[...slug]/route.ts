@@ -6,6 +6,7 @@ import '@/ai/flows/ai-driven-diagnostics';
 import '@/ai/flows/document-analysis';
 import '@/ai/flows/generate-patient-report';
 import '@/ai/flows/longitudinal-analysis';
+import '@/ai/flows/generate-schema';
 
 export const GET = nextHandler();
 export const POST = nextHandler();

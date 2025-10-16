@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '../ui/sheet';
-import { Menu, Home, UserPlus, Settings, LogIn, LogOut } from 'lucide-react';
+import { Menu, Home, UserPlus, Settings, LogIn, LogOut, Wand2 } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 
 
@@ -32,6 +32,9 @@ export function AppHeader() {
             </Link>
              <Link href="/register" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Register Patient
+            </Link>
+             <Link href="/schema-generator" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              Schema Generator
             </Link>
              <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Settings
@@ -96,6 +99,10 @@ export function AppHeader() {
                  <Link href="/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <UserPlus className="h-5 w-5" />
                   Register Patient
+                </Link>
+                 <Link href="/schema-generator" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                  <Wand2 className="h-5 w-5" />
+                  Schema Generator
                 </Link>
                 <Link href="/settings" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <Settings className="h-5 w-5" />
