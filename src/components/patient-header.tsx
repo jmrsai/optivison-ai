@@ -1,8 +1,12 @@
+'use client';
+
 import type { Patient } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 type PatientHeaderProps = {
   patient: Patient;
@@ -22,6 +26,15 @@ const getRiskBadgeClass = (riskLevel: Patient['riskLevel']) => {
   };
 
 export function PatientHeader({ patient }: PatientHeaderProps) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    // Format date on the client-side to avoid hydration mismatch
+    if (patient.lastVisit) {
+      setFormattedDate(format(new Date(patient.lastVisit), 'PPP'));
+    }
+  }, [patient.lastVisit]);
+
   return (
     <Card className="overflow-hidden shadow-sm no-print">
       <CardHeader className="flex flex-col md:flex-row items-center gap-6 bg-muted/50 p-6">
@@ -45,7 +58,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
                 </div>
                 <div>
                     <p className="font-medium text-muted-foreground">Last Visit</p>
-                    <p className="font-semibold text-base">{patient.lastVisit}</p>
+                    <p className="font-semibold text-base">{formattedDate || '...'}</p>
                 </div>
                 <div>
                     <p className="font-medium text-muted-foreground">Current Risk</p>
