@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -10,9 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { Menu, Home, UserPlus, Settings } from 'lucide-react';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '../ui/sheet';
+import { Menu, Home, UserPlus, Settings, LogIn, LogOut } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 
 
@@ -36,6 +36,9 @@ export function AppHeader() {
              <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Settings
             </Link>
+             <Link href="/login" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              Login
+            </Link>
           </nav>
           
           <DropdownMenu>
@@ -56,10 +59,18 @@ export function AppHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/settings">Settings</Link>
+                <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                 <Link href="/login">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -89,6 +100,10 @@ export function AppHeader() {
                 <Link href="/settings" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <Settings className="h-5 w-5" />
                   Settings
+                </Link>
+                 <Link href="/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                  <LogIn className="h-5 w-5" />
+                  Login
                 </Link>
               </nav>
             </SheetContent>
