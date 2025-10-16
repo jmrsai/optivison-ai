@@ -1,0 +1,47 @@
+type User @table {
+  email: String!
+  displayName: String!
+  role: String!
+  hospitalAffiliation: String
+  phoneNumber: String
+}
+
+type Patient @table {
+  firstName: String!
+  lastName: String!
+  dateOfBirth: Date!
+  gender: String!
+  medicalHistory: String
+  contactInformation: String
+}
+
+type Scan @table {
+  patient: Patient!
+  uploader: User!
+  scanType: String!
+  uploadDate: Timestamp!
+  imageUrl: String!
+  deviceUsed: String
+  notes: String
+}
+
+type Diagnosis @table {
+  patient: Patient!
+  scan: Scan!
+  reviewer: User
+  diseaseName: String!
+  diagnosisDate: Timestamp!
+  aiConfidenceScore: Float!
+  status: String!
+  severity: String
+  recommendedTreatment: String
+  clinicianNotes: String
+}
+
+type Disease @table {
+  name: String!
+  description: String!
+  commonSymptoms: String
+  treatmentGuidelines: String
+  ICD10Code: String
+}

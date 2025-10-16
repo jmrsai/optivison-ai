@@ -1,0 +1,29 @@
+mutation CreateNewScan($patientId: UUID!, $uploaderId: UUID!, $imageUrl: String!, $scanType: String!) @auth(level: USER) {
+  scan_insert(data: {patientId: $patientId, uploaderId: $uploaderId, imageUrl: $imageUrl, scanType: $scanType, uploadDate_expr: "request.time"})
+}
+
+query GetUserById($id: UUID!) @auth(level: USER) {
+  user(id: $id) {
+    id
+    displayName
+    email
+    hospitalAffiliation
+    phoneNumber
+    role
+  }
+}
+
+query ListScansForPatient($patientId: UUID!) @auth(level: USER) {
+  scans(where: {patientId: {eq: $patientId}}) {
+    id
+    deviceUsed
+    imageUrl
+    notes
+    scanType
+    uploadDate
+  }
+}
+
+mutation UpdateDiagnosisClinicianNotes($id: UUID!, $clinicianNotes: String) @auth(level: USER) {
+  diagnosis_update(id: $id, data: {clinicianNotes: $clinicianNotes})
+}

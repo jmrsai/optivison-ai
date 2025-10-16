@@ -1,0 +1,12 @@
+type Diagnosis @table {
+  patient: Patient!
+  scan: Scan!
+  reviewer: User
+  diseaseName: String!
+  diagnosisDate: Timestamp!
+  aiConfidenceScore: Float!
+  status: String!
+  severity: String
+  recommendedTreatment: String
+  clinicianNotes: String
+}

@@ -1,0 +1,70 @@
+mutation CreateDemoData @transaction @auth(level: PUBLIC, insecureReason: "This mutation is used to seed the database with example data and is safe to expose to the public") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "demouser1",
+      email: "demouser1@example.com",
+      role: "admin"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      displayName: "demouser2",
+      email: "demouser2@example.com",
+      role: "user"
+    }
+  ])
+  patient_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440002",
+      firstName: "John",
+      lastName: "Doe",
+      gender: "Male",
+      dateOfBirth: "1990-01-01"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440003",
+      firstName: "Jane",
+      lastName: "Smith",
+      gender: "Female",
+      dateOfBirth: "1985-05-10"
+    }
+  ])
+  scan_insertMany(data: [
+    {
+      id: "850e8400-e29b-41d4-a716-446655440004",
+      patientId: "650e8400-e29b-41d4-a716-446655440002",
+      uploaderId: "550e8400-e29b-41d4-a716-446655440000",
+      imageUrl: "https://example.com/scan1.jpg",
+      scanType: "X-Ray",
+      uploadDate: "2024-01-20T10:00:00Z"
+    },
+    {
+      id: "950e8400-e29b-41d4-a716-446655440005",
+      patientId: "750e8400-e29b-41d4-a716-446655440003",
+      uploaderId: "550e8400-e29b-41d4-a716-446655440001",
+      imageUrl: "https://example.com/scan2.jpg",
+      scanType: "MRI",
+      uploadDate: "2024-02-15T14:30:00Z"
+    }
+  ])
+  diagnosis_insertMany(data: [
+    {
+      id: "a50e8400-e29b-41d4-a716-446655440006",
+      patientId: "650e8400-e29b-41d4-a716-446655440002",
+      scanId: "850e8400-e29b-41d4-a716-446655440004",
+      diseaseName: "Fracture",
+      diagnosisDate: "2024-01-20T12:00:00Z",
+      aiConfidenceScore: 0.85,
+      status: "Confirmed"
+    },
+    {
+      id: "b50e8400-e29b-41d4-a716-446655440007",
+      patientId: "750e8400-e29b-41d4-a716-446655440003",
+      scanId: "950e8400-e29b-41d4-a716-446655440005",
+      diseaseName: "Tumor",
+      diagnosisDate: "2024-02-15T16:00:00Z",
+      aiConfidenceScore: 0.92,
+      status: "Suspected"
+    }
+  ])
+}

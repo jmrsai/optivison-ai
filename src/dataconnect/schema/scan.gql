@@ -1,0 +1,9 @@
+type Scan @table {
+  patient: Patient!
+  uploader: User!
+  scanType: String!
+  uploadDate: Timestamp!
+  imageUrl: String!
+  deviceUsed: String
+  notes: String
+}

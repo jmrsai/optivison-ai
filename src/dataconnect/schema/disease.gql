@@ -1,0 +1,7 @@
+type Disease @table {
+  name: String!
+  description: String!
+  commonSymptoms: String
+  treatmentGuidelines: String
+  ICD10Code: String
+}

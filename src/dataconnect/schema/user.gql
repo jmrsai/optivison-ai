@@ -1,0 +1,7 @@
+type User @table {
+  email: String!
+  displayName: String!
+  role: String!
+  hospitalAffiliation: String
+  phoneNumber: String
+}
