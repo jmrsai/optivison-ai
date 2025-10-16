@@ -4,32 +4,13 @@
  * @fileOverview A patient report generation AI agent.
  *
  * - generatePatientReport - A function that handles the patient report generation process.
- * - GeneratePatientReportInput - The input type for the generatePatientReport function.
- * - GeneratePatientReportOutput - The return type for the generatePatientReport function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { AnalyzeEyeScanOutput } from '@/ai/flows/ai-driven-diagnostics';
+import type { GeneratePatientReportInput, GeneratePatientReportOutput } from '@/ai/types';
+import { GeneratePatientReportInputSchema, GeneratePatientReportOutputSchema } from '@/ai/schemas';
 
-
-const GeneratePatientReportInputSchema = z.object({
-  patientName: z.string().describe("The patient's full name."),
-  patientAge: z.number().describe("The patient's age."),
-  patientGender: z.string().describe("The patient's gender."),
-  scanDate: z.string().describe("The date of the scan."),
-  clinicalNotes: z.string().optional().describe('The clinical notes for the scan.'),
-  analysis: z.any().describe("The full AI analysis object from the 'analyzeEyeScan' flow."),
-  patientHistory: z.string().describe('The patient history for longitudinal analysis.'),
-});
-
-export type GeneratePatientReportInput = z.infer<typeof GeneratePatientReportInputSchema> & { analysis: AnalyzeEyeScanOutput };
-
-
-const GeneratePatientReportOutputSchema = z.object({
-  report: z.string().describe('The comprehensive patient report in a structured, professional format, using markdown for section headers.'),
-});
-export type GeneratePatientReportOutput = z.infer<typeof GeneratePatientReportOutputSchema>;
 
 export async function generatePatientReport(input: GeneratePatientReportInput): Promise<GeneratePatientReportOutput> {
   return generatePatientReportFlow(input);
@@ -115,7 +96,7 @@ const generatePatientReportFlow = ai.defineFlow(
     outputSchema: GeneratePatientReportOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt(input as z.infer<typeof GeneratePatientReportInputSchema>);
     return output!;
   }
 );

@@ -4,71 +4,12 @@
  * @fileOverview AI-driven diagnostics flow for analyzing eye scans and providing diagnostic insights.
  *
  * - analyzeEyeScan - A function that analyzes an uploaded eye scan and provides diagnostic insights.
- * - AnalyzeEyeScanInput - The input type for the analyzeEyeScan function.
- * - AnalyzeEyeScanOutput - The return type for the analyzeEyescan function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { DocumentAnalysisOutput } from './document-analysis';
-
-const AnalyzeEyeScanInputSchema = z.object({
-  eyeScanDataUri: z
-    .string()
-    .describe(
-      "An eye scan image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-  patientHistory: z
-    .string()
-    .optional()
-    .describe("The patient's medical history related to eye health."),
-  clinicalNotes: z
-    .string()
-    .optional()
-    .describe('Any clinical notes or observations about the patient.'),
-  documentAnalysis: z.any().optional().describe('Analysis from an external medical document.')
-});
-export type AnalyzeEyeScanInput = z.infer<typeof AnalyzeEyeScanInputSchema> & { documentAnalysis?: DocumentAnalysisOutput };
-
-
-const AnalyzeEyeScanOutputSchema = z.object({
-  diagnosticInsights: z
-    .string()
-    .describe('A detailed summary of diagnostic insights based on the eye scan analysis. Reference specific biomarkers or features detected by the deep learning model.'),
-  potentialAbnormalities: z
-    .array(z.string())
-    .describe('A list of potential abnormalities or diseases identified from the deep learning analysis (e.g., Glaucoma, Diabetic Retinopathy, Macular Degeneration).'),
-  differentialDiagnosis: z.array(z.string()).describe('A list of possible alternative diagnoses to consider based on the identified patterns.'),
-  earlySigns: z
-    .array(z.string())
-    .describe('A list of any subtle or early-stage biomarkers of disease detected by the model. Focus on early detection.'),
-  preventionSuggestions: z
-    .array(z.string())
-    .describe('A list of suggested preventive measures based on the findings.'),
-  diseaseStaging: z
-    .string()
-    .optional()
-    .describe('If a disease is identified, provide its stage (e.g., "Early-stage", "Moderate", "Advanced") based on quantitative analysis if possible.'),
-  riskAssessment: z
-    .string()
-    .describe('An assessment of the patient’s risk for disease progression or developing new conditions, citing specific features from the scan.'),
-  riskLevel: z.enum(['Low', 'Medium', 'High', 'N/A']).describe("The patient's overall risk level based on the analysis. Must be 'Low', 'Medium', or 'High'."),
-  treatmentSuggestions: z
-    .array(z.string())
-    .describe('A list of suggested treatments or management plans based on the diagnosis.'),
-  followUpPlan: z
-    .string()
-    .describe('A detailed plan for patient follow-up, including recommended imaging, tests, and timelines.'),
-  confidenceLevel: z
-    .number()
-    .min(0)
-    .max(1)
-    .describe('The confidence level of the AI model in its primary diagnosis (from 0 to 1).'),
-  recommendations: z
-    .string()
-    .describe('Recommendations for next steps, such as specialist referrals or further imaging.'),
-});
-export type AnalyzeEyeScanOutput = z.infer<typeof AnalyzeEyeScanOutputSchema>;
+import type { AnalyzeEyeScanInput, AnalyzeEyeScanOutput } from '@/ai/types';
+import { AnalyzeEyeScanInputSchema, AnalyzeEyeScanOutputSchema } from '@/ai/schemas';
 
 export async function analyzeEyeScan(input: AnalyzeEyeScanInput): Promise<AnalyzeEyeScanOutput> {
   return analyzeEyeScanFlow(input);

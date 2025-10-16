@@ -1,4 +1,4 @@
-import type { AnalyzeEyeScanOutput } from "@/ai/flows/ai-driven-diagnostics";
+import type { AnalyzeEyeScanOutput } from "@/ai/types";
 
 export type Patient = {
   id: string;

@@ -4,30 +4,12 @@
  * @fileOverview An AI flow for analyzing and summarizing medical documents.
  *
  * - analyzeDocument - A function that handles the document analysis process.
- * - DocumentAnalysisInput - The input type for the analyzeDocument function.
- * - DocumentAnalysisOutput - The return type for the analyzeDocument function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
 import pdf from 'pdf-parse';
-
-const DocumentAnalysisInputSchema = z.object({
-  documentDataUri: z
-    .string()
-    .describe(
-      "A medical document as a data URI that must include a MIME type and use Base64 encoding. Can be an image or a PDF. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type DocumentAnalysisInput = z.infer<typeof DocumentAnalysisInputSchema>;
-
-const DocumentAnalysisOutputSchema = z.object({
-  summary: z.string().describe('A concise summary of the entire document.'),
-  diagnoses: z.array(z.string()).describe('A list of all medical diagnoses mentioned in the document.'),
-  medications: z.array(z.string()).describe('A list of all medications mentioned in the document.'),
-  recommendations: z.string().describe('A summary of the key recommendations or treatment plans from the document.'),
-});
-export type DocumentAnalysisOutput = z.infer<typeof DocumentAnalysisOutputSchema>;
+import type { DocumentAnalysisInput, DocumentAnalysisOutput } from '@/ai/types';
+import { DocumentAnalysisInputSchema, DocumentAnalysisOutputSchema } from '@/ai/schemas';
 
 export async function analyzeDocument(input: DocumentAnalysisInput): Promise<DocumentAnalysisOutput> {
   return documentAnalysisFlow(input);

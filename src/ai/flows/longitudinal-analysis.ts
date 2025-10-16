@@ -4,42 +4,12 @@
  * @fileOverview AI flow for generating a longitudinal analysis report by comparing multiple scans over time.
  *
  * - generateLongitudinalAnalysis - A function that generates the report.
- * - LongitudinalAnalysisInput - The input type for the function.
- * - LongitudinalAnalysisOutput - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-const ScanSummarySchema = z.object({
-  date: z.string().describe('The date of the scan.'),
-  diagnosticInsights: z.string().describe('The key diagnostic summary from this scan.'),
-  potentialAbnormalities: z.array(z.string()).describe('List of abnormalities found.'),
-  riskLevel: z.enum(['Low', 'Medium', 'High', 'N/A']).describe("The patient's overall risk level from this scan."),
-});
-
-const LongitudinalAnalysisInputSchema = z.object({
-  patientHistory: z.string().describe("The patient's overall medical history."),
-  scans: z
-    .array(ScanSummarySchema)
-    .describe('An array of previous scan summaries, ordered from most recent to oldest.'),
-});
-export type LongitudinalAnalysisInput = z.infer<typeof LongitudinalAnalysisInputSchema>;
-
-const ChartDataPointSchema = z.object({
-  date: z.string().describe('The date of the scan (e.g., "YYYY-MM-DD").'),
-  riskScore: z.number().describe('A numerical representation of risk: Low=1, Medium=2, High=3.'),
-});
-
-const LongitudinalAnalysisOutputSchema = z.object({
-  longitudinalSummary: z
-    .string()
-    .describe(
-      'A detailed, paragraph-style summary analyzing the progression of the patient’s condition over time. Compare findings between scans to identify trends, stability, or changes (improvement/worsening). Mention specific changes in abnormalities and provide a risk assessment for future progression.'
-    ),
-  chartData: z.array(ChartDataPointSchema).describe('An array of data points for plotting risk over time. The array should be sorted by date in ascending order.'),
-});
-export type LongitudinalAnalysisOutput = z.infer<typeof LongitudinalAnalysisOutputSchema>;
+import type { LongitudinalAnalysisInput, LongitudinalAnalysisOutput } from '@/ai/types';
+import { LongitudinalAnalysisInputSchema, LongitudinalAnalysisOutputSchema } from '@/ai/schemas';
 
 export async function generateLongitudinalAnalysis(
   input: LongitudinalAnalysisInput
