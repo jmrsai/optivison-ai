@@ -4,5 +4,11 @@
       "maxDuration": 300,
       "memory": 1024
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
+    }
+  ]
 }
