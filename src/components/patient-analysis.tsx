@@ -21,6 +21,7 @@ import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { fileToDataUri } from '@/lib/utils';
+import { decrypt } from '@/lib/crypto';
 
 
 type PatientAnalysisProps = {
@@ -82,9 +83,12 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         
         const eyeScanDataUri = await fileToDataUri(imageFile);
         
+        // Decrypt patient history for the AI
+        const decryptedHistory = await decrypt(patient.history);
+
         const analysisResult = await analyzeEyeScan({
             eyeScanDataUri: eyeScanDataUri,
-            patientHistory: patient.history,
+            patientHistory: decryptedHistory,
             clinicalNotes: clinicalNotes,
             documentAnalysis: documentAnalysisResult,
         });
@@ -106,12 +110,12 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             scanDate: scanDate,
             clinicalNotes: clinicalNotes,
             analysis: analysisResult,
-            patientHistory: patient.history,
+            patientHistory: decryptedHistory,
         });
 
         finalScan.report = reportResult.report;
         
-        saveScan(finalScan);
+        await saveScan(finalScan);
         setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
         
         if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
@@ -127,7 +131,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
     } catch (error) {
         console.error("AI analysis pipeline failed:", error);
         const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
-        saveScan(failedScan);
+        await saveScan(failedScan);
         setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
         toast({
             variant: "destructive",
@@ -151,8 +155,11 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             setIsLongitudinalLoading(false);
             return;
         }
+
+        const decryptedHistory = await decrypt(patient.history);
+
         const result = await generateLongitudinalAnalysis({
-            patientHistory: patient.history,
+            patientHistory: decryptedHistory,
             scans: completedScans.map(s => ({
                 date: s.date,
                 diagnosticInsights: s.analysis!.diagnosticInsights,

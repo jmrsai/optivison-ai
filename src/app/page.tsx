@@ -30,10 +30,15 @@ function StatCard({ title, value, icon: Icon }: { title: string; value: string |
 export default function DashboardPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setPatients(getPatients());
-    setScans(getScans());
+    async function fetchData() {
+      setPatients(await getPatients());
+      setScans(await getScans());
+      setLoading(false);
+    }
+    fetchData();
   }, []);
 
   const highRiskPatients = patients.filter(p => p.riskLevel === 'High').length;
@@ -56,9 +61,9 @@ export default function DashboardPage() {
         </div>
         
         <div className="grid gap-4 md:grid-cols-3 mb-8">
-            <StatCard title="Total Patients" value={patients.length} icon={Users} />
-            <StatCard title="Total Scans" value={scans.length} icon={ScanEye} />
-            <StatCard title="High-Risk Patients" value={highRiskPatients} icon={AlertTriangle} />
+            <StatCard title="Total Patients" value={loading ? '...' : patients.length} icon={Users} />
+            <StatCard title="Total Scans" value={loading ? '...' : scans.length} icon={ScanEye} />
+            <StatCard title="High-Risk Patients" value={loading ? '...' : highRiskPatients} icon={AlertTriangle} />
         </div>
 
         <Card className="shadow-sm">
@@ -66,7 +71,7 @@ export default function DashboardPage() {
             <CardTitle>Patient Roster</CardTitle>
           </CardHeader>
           <CardContent>
-            <PatientList patients={patients} />
+            {loading ? <p>Loading patients...</p> : <PatientList patients={patients} />}
           </CardContent>
         </Card>
       </main>

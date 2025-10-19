@@ -1,5 +1,6 @@
 import { MOCK_PATIENTS, MOCK_SCANS } from './mock-data';
 import type { Patient, Scan } from './types';
+import { encrypt, decrypt } from './crypto';
 
 const PATIENTS_KEY = 'optivision_patients';
 const SCANS_KEY = 'optivision_scans';
@@ -10,61 +11,90 @@ const isBrowser = () => typeof window !== 'undefined';
 // Initialize data in localStorage if it's not already there
 if (isBrowser()) {
   if (!localStorage.getItem(PATIENTS_KEY)) {
-    localStorage.setItem(PATIENTS_KEY, JSON.stringify(MOCK_PATIENTS));
+    // Encrypt mock data before storing
+    Promise.all(MOCK_PATIENTS.map(async (p) => ({...p, history: await encrypt(p.history)}))).then(encryptedPatients => {
+        localStorage.setItem(PATIENTS_KEY, JSON.stringify(encryptedPatients));
+    });
   }
   if (!localStorage.getItem(SCANS_KEY)) {
-    localStorage.setItem(SCANS_KEY, JSON.stringify(MOCK_SCANS));
+     Promise.all(MOCK_SCANS.map(async (s) => ({...s, clinicalNotes: await encrypt(s.clinicalNotes)}))).then(encryptedScans => {
+        localStorage.setItem(SCANS_KEY, JSON.stringify(encryptedScans));
+    });
   }
 }
 
 // === Patient Functions ===
 
-export function getPatients(): Patient[] {
+export async function getPatients(): Promise<Patient[]> {
   if (!isBrowser()) return MOCK_PATIENTS;
-  const patients = localStorage.getItem(PATIENTS_KEY);
-  return patients ? JSON.parse(patients) : [];
+  const patientsJSON = localStorage.getItem(PATIENTS_KEY);
+  const patients = patientsJSON ? JSON.parse(patientsJSON) : [];
+
+  // Decrypt patient history
+  return Promise.all(
+    patients.map(async (p: Patient) => ({
+      ...p,
+      history: await decrypt(p.history),
+    }))
+  );
 }
 
-export function getPatient(id: string): Patient | undefined {
-  if (!isBrowser()) return MOCK_PATIENTS.find(p => p.id === id);
-  const patients = getPatients();
+export async function getPatient(id: string): Promise<Patient | undefined> {
+  const patients = await getPatients();
   return patients.find((p) => p.id === id);
 }
 
-export function savePatient(patient: Patient): void {
+export async function savePatient(patient: Patient): Promise<void> {
   if (!isBrowser()) return;
-  const patients = getPatients();
-  const existingIndex = patients.findIndex((p) => p.id === patient.id);
+  let patients = JSON.parse(localStorage.getItem(PATIENTS_KEY) || '[]');
+  const encryptedPatient = {
+    ...patient,
+    history: await encrypt(patient.history),
+  };
+
+  const existingIndex = patients.findIndex((p: Patient) => p.id === patient.id);
   if (existingIndex > -1) {
-    patients[existingIndex] = patient;
+    patients[existingIndex] = encryptedPatient;
   } else {
-    patients.unshift(patient);
+    patients.unshift(encryptedPatient);
   }
   localStorage.setItem(PATIENTS_KEY, JSON.stringify(patients));
 }
 
 // === Scan Functions ===
 
-export function getScans(): Scan[] {
+export async function getScans(): Promise<Scan[]> {
   if (!isBrowser()) return MOCK_SCANS;
-  const scans = localStorage.getItem(SCANS_KEY);
-  return scans ? JSON.parse(scans) : [];
+  const scansJSON = localStorage.getItem(SCANS_KEY);
+  const scans = scansJSON ? JSON.parse(scansJSON) : [];
+  
+  // Decrypt clinical notes
+  return Promise.all(
+      scans.map(async (s: Scan) => ({
+          ...s,
+          clinicalNotes: await decrypt(s.clinicalNotes),
+      }))
+  );
 }
 
-export function getScansByPatient(patientId: string): Scan[] {
-  if (!isBrowser()) return MOCK_SCANS.filter(s => s.patientId === patientId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const scans = getScans();
+export async function getScansByPatient(patientId: string): Promise<Scan[]> {
+  const scans = await getScans();
   return scans.filter((s) => s.patientId === patientId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export function saveScan(scan: Scan): void {
+export async function saveScan(scan: Scan): Promise<void> {
   if (!isBrowser()) return;
-  const scans = getScans();
+  const scans = JSON.parse(localStorage.getItem(SCANS_KEY) || '[]');
+  const encryptedScan = {
+      ...scan,
+      clinicalNotes: await encrypt(scan.clinicalNotes),
+  };
+
   const existingIndex = scans.findIndex((s) => s.id === scan.id);
   if (existingIndex > -1) {
-    scans[existingIndex] = scan;
+    scans[existingIndex] = encryptedScan;
   } else {
-    scans.unshift(scan);
+    scans.unshift(encryptedScan);
   }
   localStorage.setItem(SCANS_KEY, JSON.stringify(scans));
 }

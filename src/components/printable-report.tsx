@@ -7,6 +7,7 @@ import { Logo } from './icons';
 type PrintableReportProps = {
   scan: Scan;
   patient: Patient;
+  decryptedHistory: string;
 };
 
 const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -35,7 +36,7 @@ const ListSection = ({ title, items }: { title: string, items: string[] | undefi
 );
 
 
-export function PrintableReport({ scan, patient }: PrintableReportProps) {
+export function PrintableReport({ scan, patient, decryptedHistory }: PrintableReportProps) {
   if (!scan.analysis || !scan.report) {
     return null; // Don't render if analysis is missing
   }
@@ -66,7 +67,7 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
           <InfoPair label="Patient ID" value={patient.id} />
           <div className="col-span-4 mt-2">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Patient Medical History</p>
-             <p className="font-semibold whitespace-pre-wrap">{patient.history}</p>
+             <p className="font-semibold whitespace-pre-wrap">{decryptedHistory}</p>
           </div>
            <div className="col-span-4 mt-1">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Clinical Notes for this Scan</p>

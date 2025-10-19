@@ -14,6 +14,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { decrypt } from '@/lib/crypto';
 
 type ScanCardProps = {
   scan: Scan;
@@ -51,6 +52,8 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
 
     setIsDownloading(true);
 
+    const decryptedHistory = await decrypt(patient.history);
+
     const reportElement = document.createElement('div');
     // Style the new div to be off-screen
     reportElement.style.position = 'absolute';
@@ -63,7 +66,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     const root = createRoot(reportElement);
     
     // Render the PrintableReport component into the off-screen div
-    root.render(<PrintableReport scan={scan} patient={patient} />);
+    root.render(<PrintableReport scan={scan} patient={patient} decryptedHistory={decryptedHistory} />);
 
     // Allow time for the component to render
     await new Promise(resolve => setTimeout(resolve, 500));
