@@ -22,3 +22,5 @@ export type MedicalChartBotOutput = z.infer<typeof MedicalChartBotOutputSchema>;
 
 export type StrabismusAnalysisInput = z.infer<typeof StrabismusAnalysisInputSchema>;
 export type StrabismusAnalysisOutput = z.infer<typeof StrabismusAnalysisOutputSchema>;
+
+    

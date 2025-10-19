@@ -9,16 +9,12 @@ import {
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import type { Database } from 'firebase/database';
-import type { Analytics } from 'firebase/analytics';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContext {
   firebaseApp: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
-  database: Database;
-  analytics: Analytics | null;
 }
 
 const Context = createContext<FirebaseContext | undefined>(undefined);
@@ -28,21 +24,17 @@ export function FirebaseProvider(
     firebaseApp: FirebaseApp;
     auth: Auth;
     firestore: Firestore;
-    database: Database;
-    analytics: Analytics | null;
   }>
 ) {
-  const { firebaseApp, auth, firestore, database, analytics } = props;
+  const { firebaseApp, auth, firestore } = props;
 
   const value = useMemo(() => {
     return {
       firebaseApp,
       auth,
       firestore,
-      database,
-      analytics,
     };
-  }, [firebaseApp, auth, firestore, database, analytics]);
+  }, [firebaseApp, auth, firestore]);
 
   return (
     <Context.Provider value={value}>
@@ -78,20 +70,4 @@ export function useFirestore() {
   const { firestore } = useFirebase();
 
   return firestore;
-}
-
-export function useDatabase() {
-    const { database } = useFirebase();
-
-    return database;
-}
-
-export function useAnalytics() {
-  const { analytics } = useFirebase();
-
-  if (!analytics) {
-    console.warn('Firebase Analytics is not available. This might be because it is being accessed from the server.');
-  }
-
-  return analytics;
 }
