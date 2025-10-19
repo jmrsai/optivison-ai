@@ -87,7 +87,7 @@
     }
   },
   "auth": {
-    "providers": ["password", "google.com", "github.com"]
+    "providers": ["password", "google.com", "phone"]
   },
   "firestore": {
     "/patients/{patientId}": {
