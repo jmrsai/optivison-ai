@@ -1,6 +1,27 @@
 
 {
   "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information, including their role.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["clinician", "patient"]
+        }
+      },
+      "required": ["displayName", "email", "role"]
+    },
     "patient": {
       "title": "Patient",
       "description": "Represents a patient in the clinic.",
@@ -84,25 +105,47 @@
         }
       },
       "required": ["patientId", "clinicianId", "date", "imageUrl", "status"]
+    },
+    "message": {
+      "title": "Message",
+      "description": "A single message in a chat between two users.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "senderId", "receiverId", "timestamp"]
     }
   },
   "auth": {
     "providers": ["password", "google.com", "phone"]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/userProfile"
+      },
+      "description": "Stores user profile information, including their role."
+    },
     "/patients/{patientId}": {
       "schema": {
         "$ref": "#/entities/patient"
       },
-      "description": "Stores patient records."
+      "description": "Stores patient records, accessible by assigned clinicians."
     },
     "/scans/{scanId}": {
       "schema": {
         "$ref": "#/entities/scan"
       },
-      "description": "Stores individual scan records and their analysis results."
+      "description": "Stores individual scan records."
+    },
+    "/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/message"
+      },
+      "description": "Stores chat messages between users."
     }
   }
 }
-
-    

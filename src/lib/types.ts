@@ -1,6 +1,14 @@
+
 import type { AnalyzeEyeScanOutputSchema } from "@/ai/schemas";
 import type { Timestamp } from "firebase/firestore";
 import { z } from "genkit";
+
+export type UserProfile = {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'clinician' | 'patient';
+};
 
 export type Patient = {
   id: string;
@@ -30,4 +38,12 @@ export type Scan = {
   analysis?: ScanAnalysis;
   report?: string;
   createdAt?: Timestamp;
+};
+
+export type Message = {
+    id: string;
+    text: string;
+    senderId: string;
+    receiverId: string;
+    timestamp: Timestamp;
 };

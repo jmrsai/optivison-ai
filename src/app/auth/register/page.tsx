@@ -12,21 +12,25 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useAuth } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Please enter your full name.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  role: z.enum(['clinician', 'patient'], { required_error: 'You must select a role.' }),
 });
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,18 +38,27 @@ export default function RegisterPage() {
       name: '',
       email: '',
       password: '',
+      role: 'clinician',
     },
   });
 
   const isSubmitting = form.formState.isSubmitting;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
       
-      await updateProfile(userCredential.user, {
+      await updateProfile(user, {
         displayName: values.name,
+      });
+
+      // Save user role in Firestore
+      await setDoc(doc(firestore, 'users', user.uid), {
+        displayName: values.name,
+        email: values.email,
+        role: values.role,
       });
 
       toast({
@@ -66,27 +79,6 @@ export default function RegisterPage() {
     }
   }
 
-  const handleSocialLogin = async (provider: 'google') => {
-    if (!auth) return;
-    const authProvider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, authProvider);
-      toast({
-        title: 'Registration Successful',
-        description: `Welcome! You've successfully signed up with Google.`,
-      });
-      router.push('/');
-    } catch (error: any) {
-      console.error(`${provider} login failed:`, error);
-      toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: `Could not sign up with Google. Please try again.`,
-      });
-    }
-  };
-
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -94,7 +86,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle>Create Clinician Account</CardTitle>
+              <CardTitle>Create an Account</CardTitle>
               <CardDescription>Register to start using OptiVision AI.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,9 +132,43 @@ export default function RegisterPage() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={form.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel>Register as a...</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex space-x-4"
+                              >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="clinician" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Clinician
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="patient" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Patient
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <Button type="submit" className="w-full" disabled={isSubmitting}>
                          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Create Account with Email
+                        Create Account
                       </Button>
                    </fieldset>
                 </form>
@@ -154,19 +180,12 @@ export default function RegisterPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
+                    Or
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                 <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isSubmitting}>
-                  <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 173.4 56.4l-64 64C318.6 98.2 284.7 84 248 84c-9.2 0-17.6.3-26.1.9-106.3 7.6-189.5 97.4-189.5 205.2s83.2 197.6 189.5 205.2c9.2.6 17.6.9 26.1.9 44.9 0 84.1-15.1 113.3-40.2l61.6 61.6c-47.5 42.1-109.8 66.8-177.3 66.8C104.9 512 0 407.1 0 256S104.9 0 248 0c82.4 0 154.9 33.2 206.1 86.8l-37.1 37.1C421.1 114.1 376.4 84 324.9 84c-33.7 0-64.8 10.3-90.1 27.6l64.3 64.3H248v88.9h239.8c.4-9.9.6-19.8.6-29.8z"></path></svg>
-                  Google
-                </Button>
-              </div>
-
-              <p className="text-center text-sm text-muted-foreground mt-6">
+              <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
                 <Button variant="link" asChild className="p-0">
                     <Link href="/auth/login">
