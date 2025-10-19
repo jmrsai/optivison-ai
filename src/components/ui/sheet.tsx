@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -57,16 +58,16 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = "right", className, children, ...props }, ref) => {
-  const [isMounted, setIsMounted] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    setIsMounted(true)
+  }, [])
 
   if (!isMounted) {
-    return null;
+    return null
   }
-  
+
   return (
     <SheetPortal>
       <SheetOverlay />
