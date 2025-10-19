@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, OAuthCredential } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -144,12 +144,23 @@ export default function LoginPage() {
 
   const handleSocialLogin = async (providerName: 'google') => {
     if (!auth) return;
-    const provider = providerName === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider();
+    const provider = new GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken;
+      
+      // The signed-in user info.
+      const user = result.user;
+
       toast({
         title: 'Login Successful',
-        description: `Welcome! You've successfully signed in with ${providerName.charAt(0).toUpperCase() + providerName.slice(1)}.`,
+        description: `Welcome, ${user.displayName}! You've successfully signed in with Google.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -281,7 +292,7 @@ export default function LoginPage() {
               <p className="text-center text-sm text-muted-foreground mt-6">
                 Don't have an account?{' '}
                 <Button variant="link" asChild className="p-0">
-                    <Link href="/auth/register">
+                    <Link href="/register">
                     Register here
                     </Link>
                 </Button>
@@ -293,3 +304,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
