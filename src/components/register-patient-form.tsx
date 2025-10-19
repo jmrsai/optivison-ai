@@ -18,7 +18,9 @@ import { addPatient } from '@/lib/patient-service';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  age: z.coerce.number().min(0, { message: 'Age must be a positive number.' }),
+  age: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, {
+    message: 'Age must be a positive number.',
+  }).transform(Number),
   gender: z.enum(['Male', 'Female', 'Other']),
   history: z.string().min(10, { message: 'History must be at least 10 characters.' }),
 });
@@ -105,7 +107,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
                     <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="68" {...field} />
+                        <Input inputMode="numeric" placeholder="68" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
