@@ -32,10 +32,10 @@ export default function LoginPage() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // NOTE: This is a mock login. In a real application, you would
     // call your authentication service here.
-    if (values.email === 'drcarter@optivision.io' && values.password === 'password') {
+    if (values.email === 'drjmr@optivision.io' && values.password === 'password') {
         toast({
             title: "Login Successful",
-            description: "Welcome back, Dr. Carter!",
+            description: "Welcome back, Dr. JMR!",
         });
         router.push('/');
     } else {
@@ -67,7 +67,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="drcarter@optivision.io" {...field} />
+                          <Input type="email" placeholder="drjmr@optivision.io" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

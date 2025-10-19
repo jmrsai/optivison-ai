@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -63,11 +64,11 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" defaultValue="Dr. Carter" />
+                <Input id="name" defaultValue="Dr. JMR" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="drcarter@optivision.io" />
+                <Input id="email" type="email" defaultValue="drjmr@optivision.io" />
               </div>
               <div className="flex justify-end">
                 <Button>Save Changes</Button>

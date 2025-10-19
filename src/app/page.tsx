@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -9,6 +10,7 @@ import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Patient, Scan } from '@/lib/types';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 function StatCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
   return (
@@ -43,7 +45,7 @@ export default function DashboardPage() {
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Clinician Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, Dr. Carter. Here's an overview of your patients.</p>
+            <p className="text-muted-foreground">Welcome back, Dr. JMR. Here's an overview of your patients.</p>
           </div>
            <Button asChild className="w-full md:w-auto" size="lg">
               <Link href="/register">
