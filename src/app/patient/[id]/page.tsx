@@ -3,49 +3,67 @@
 import { AppHeader } from '@/components/layout/app-header';
 import { PatientAnalysis } from '@/components/patient-analysis';
 import { PatientHeader } from '@/components/patient-header';
-import { getPatient, getScansByPatient, savePatient } from '@/lib/storage';
-import { Card, CardContent } from '@/components/ui/card';
 import { notFound, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { ArrowLeft, Loader } from 'lucide-react';
 import type { Patient, Scan } from '@/lib/types';
+import { useUser, useFirestore } from '@/firebase';
+import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
+import { doc, collection, query, where, orderBy } from 'firebase/firestore';
+import { updatePatient } from '@/lib/patient-service';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function PatientPage() {
   const params = useParams();
   const id = params.id as string;
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [scans, setScans] = useState<Scan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
 
-  useEffect(() => {
+  const [patientDoc, patientLoading, patientError] = useDocument(
+    id ? doc(firestore, 'patients', id) : undefined
+  );
+  
+  const [scansCollection, scansLoading, scansError] = useCollection(
+    id ? query(collection(firestore, 'scans'), where('patientId', '==', id), orderBy('date', 'desc')) : undefined
+  );
+  
+  const patient = patientDoc?.data() ? { id: patientDoc.id, ...patientDoc.data() } as Patient : null;
+  const scans = scansCollection?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan)) || [];
+
+  const handlePatientUpdate = async (updatedPatient: Partial<Patient>) => {
     if (!id) return;
-    async function loadData() {
-        const foundPatient = await getPatient(id);
-        if (foundPatient) {
-          setPatient(foundPatient);
-          setScans(await getScansByPatient(id));
-        }
-        setLoading(false);
-    }
-    loadData();
-  }, [id]);
-
-  const handlePatientUpdate = useCallback(async (updatedPatient: Patient) => {
-    await savePatient(updatedPatient);
-    setPatient(updatedPatient);
-  }, []);
-
-  if (loading) {
+    await updatePatient(firestore, id, updatedPatient);
+  };
+  
+  if (patientLoading || userLoading || scansLoading) {
     return (
        <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-8">
-          <p>Loading...</p>
+        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+                <Loader className="h-6 w-6 animate-spin" />
+                <p className="text-muted-foreground">Loading Patient Data...</p>
+            </div>
         </main>
       </div>
     );
+  }
+
+  // Security check: ensure the logged-in user is the clinician for this patient
+  if (patient && user && patient.clinicianId !== user.uid) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
+          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+          <p className="text-muted-foreground">You do not have permission to view this patient's records.</p>
+           <Button asChild variant="link" className="mt-4">
+              <Link href="/">Back to Dashboard</Link>
+           </Button>
+        </main>
+      </div>
+    )
   }
 
   if (!patient) {

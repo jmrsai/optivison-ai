@@ -10,7 +10,7 @@ import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { analyzeDocument } from '@/ai/flows/document-analysis';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
-import { saveScan } from '@/lib/storage';
+import { addScan, updateScan } from '@/lib/scan-service';
 import { generateLongitudinalAnalysis } from '@/ai/flows/longitudinal-analysis';
 import type { LongitudinalAnalysisOutput } from '@/ai/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -20,13 +20,12 @@ import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { fileToDataUri } from '@/lib/utils';
-import { decrypt } from '@/lib/crypto';
-
+import { useFirestore, useUser } from '@/firebase';
 
 type PatientAnalysisProps = {
   patient: Patient;
   initialScans: Scan[];
-  onPatientUpdate: (patient: Patient) => void;
+  onPatientUpdate: (patient: Partial<Patient>) => void;
 };
 
 const chartConfig = {
@@ -43,6 +42,8 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   const { toast } = useToast();
   const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<LongitudinalAnalysisOutput | null>(null);
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   useEffect(() => {
     setScans(initialScans);
@@ -58,31 +59,40 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
     documentFile: File | null;
   }) => {
     setSheetOpen(false);
+    if (!user) return;
 
     const tempId = `scan-${Date.now()}`;
     const scanDate = new Date().toISOString().split('T')[0];
 
-    const newScanPlaceholder: Scan = {
-      id: tempId,
+    const newScanPlaceholder: Omit<Scan, 'id'> = {
       patientId: patient.id,
+      clinicianId: user.uid,
       date: scanDate,
       imageUrl: URL.createObjectURL(imageFile),
       clinicalNotes,
       status: 'processing',
     };
     
-    setScans(prevScans => [newScanPlaceholder, ...prevScans]);
+    // Add placeholder to UI immediately
+    const tempScanForUi = { ...newScanPlaceholder, id: tempId };
+    setScans(prevScans => [tempScanForUi, ...prevScans]);
+
+    let scanId: string | null = null;
 
     try {
+        scanId = await addScan(firestore, newScanPlaceholder);
+
         const eyeScanDataUri = await fileToDataUri(imageFile);
         let documentSummary: string | undefined;
 
         if (documentFile) {
             const documentDataUri = await fileToDataUri(documentFile);
+            toast({ title: "Analyzing Document...", description: "The optional medical document is being analyzed." });
             const docAnalysisResult = await analyzeDocument({ documentDataUri });
             documentSummary = docAnalysisResult.summary;
         }
         
+        toast({ title: "Analyzing Eye Scan...", description: "The main AI analysis is now in progress." });
         const analysisResult = await analyzeEyeScan({
             eyeScanDataUri,
             patientHistory: patient.history,
@@ -90,16 +100,17 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             documentSummary,
         });
         
-        const scanWithAnalysis: Scan = {
-            ...newScanPlaceholder,
+        const scanUpdateWithAnalysis: Partial<Scan> = {
             imageUrl: eyeScanDataUri, 
             analysis: analysisResult,
             status: 'completed',
             report: 'Generating report...'
         };
         
-        setScans((prev) => prev.map((s) => (s.id === tempId ? scanWithAnalysis : s)));
+        await updateScan(firestore, scanId, scanUpdateWithAnalysis);
+        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...scanUpdateWithAnalysis, id: scanId! } : s)));
 
+        toast({ title: "Generating Report...", description: "The final report is being compiled." });
         const reportResult = await generatePatientReport({
             patientName: patient.name,
             patientAge: patient.age,
@@ -110,16 +121,14 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             patientHistory: patient.history,
         });
 
-        const finalScan: Scan = {
-            ...scanWithAnalysis,
+        const finalScanUpdate: Partial<Scan> = {
             report: reportResult.report
         }
         
-        await saveScan(finalScan);
-        setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
+        await updateScan(firestore, scanId, finalScanUpdate);
         
         if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
-            const updatedPatient = { ...patient, riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
+            const updatedPatient = { riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
             onPatientUpdate(updatedPatient);
         }
 
@@ -130,9 +139,10 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
 
     } catch (error) {
         console.error("AI analysis pipeline failed:", error);
-        const failedScan = { ...newScanPlaceholder, status: 'failed' as const };
-        await saveScan(failedScan);
-        setScans((prev) => prev.map((s) => (s.id === tempId ? failedScan : s)));
+        if (scanId) {
+            const failedScanUpdate = { status: 'failed' as const };
+            await updateScan(firestore, scanId, failedScanUpdate);
+        }
         toast({
             variant: "destructive",
             title: "Analysis Failed",
@@ -272,7 +282,6 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             )}
           </div>
       </div>
-
 
       <NewAnalysisSheet
         isOpen={isSheetOpen}

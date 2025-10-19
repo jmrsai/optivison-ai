@@ -49,6 +49,10 @@ const longitudinalAnalysisFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
+    // Sort chart data chronologically
+    if (output?.chartData) {
+      output.chartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
     return output!;
   }
 );

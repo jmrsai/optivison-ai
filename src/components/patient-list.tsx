@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Eye } from 'lucide-react';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 type PatientListProps = {
   patients: Patient[];
@@ -74,7 +75,7 @@ export function PatientList({ patients }: PatientListProps) {
               </TableCell>
               <TableCell className="hidden md:table-cell">{patient.age}</TableCell>
               <TableCell className="hidden md:table-cell">{patient.gender}</TableCell>
-              <TableCell className="hidden lg:table-cell">{patient.lastVisit}</TableCell>
+              <TableCell className="hidden lg:table-cell">{format(new Date(patient.lastVisit), 'PPP')}</TableCell>
               <TableCell>
                 <Badge
                   variant="outline"

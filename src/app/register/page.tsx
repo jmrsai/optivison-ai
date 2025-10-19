@@ -7,16 +7,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { savePatient } from '@/lib/storage';
 import { Patient } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 import placeholderImages from '@/lib/placeholder-images.json';
+import { useUser, useFirestore } from '@/firebase';
+import { addPatient } from '@/lib/patient-service';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -28,6 +29,9 @@ const formSchema = z.object({
 export default function RegisterPatientPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,24 +41,42 @@ export default function RegisterPatientPage() {
       history: '',
     },
   });
+  
+  const isSubmitting = form.formState.isSubmitting;
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newPatient: Patient = {
-      id: `patient-${Date.now()}`,
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not Authenticated",
+            description: "You must be logged in to register a patient.",
+        });
+        return;
+    }
+    
+    const newPatient: Omit<Patient, 'id'> = {
       ...values,
+      clinicianId: user.uid,
       lastVisit: new Date().toISOString().split('T')[0],
-      avatarUrl: placeholderImages.patient4.src,
+      avatarUrl: placeholderImages[`patient${(Math.floor(Math.random() * 4) + 1)}` as keyof typeof placeholderImages].src,
       riskLevel: 'N/A',
     };
 
-    savePatient(newPatient);
-    
-    toast({
-        title: "Patient Registered",
-        description: `${newPatient.name} has been successfully registered.`,
-    });
-
-    router.push(`/patient/${newPatient.id}`);
+    try {
+      const patientId = await addPatient(firestore, newPatient);
+      toast({
+          title: "Patient Registered",
+          description: `${newPatient.name} has been successfully registered.`,
+      });
+      router.push(`/patient/${patientId}`);
+    } catch (error) {
+       toast({
+          variant: "destructive",
+          title: "Registration Failed",
+          description: "Could not save patient to the database.",
+      });
+      console.error("Failed to register patient:", error);
+    }
   }
 
   return (
@@ -62,7 +84,7 @@ export default function RegisterPatientPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <div className="mb-6">
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" disabled={isSubmitting}>
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
@@ -79,77 +101,88 @@ export default function RegisterPatientPage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <fieldset disabled={isSubmitting || userLoading}>
                     <FormField
                       control={form.control}
-                      name="age"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Age</FormLabel>
+                          <FormLabel>Full Name</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="68" {...field} />
+                            <Input placeholder="John Doe" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="age"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Age</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="68" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a gender" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Male">Male</SelectItem>
+                                <SelectItem value="Female">Female</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
-                      name="gender"
+                      name="history"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Gender</FormLabel>
-                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a gender" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Patient History</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Patient has a family history of glaucoma..."
+                              className="resize-none"
+                              rows={5}
+                              {...field}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                   <FormField
-                    control={form.control}
-                    name="history"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Patient History</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Patient has a family history of glaucoma..."
-                            className="resize-none"
-                            rows={5}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end">
-                    <Button type="submit">Register Patient</Button>
-                  </div>
+                    <div className="flex justify-end pt-4">
+                      <Button type="submit" disabled={isSubmitting || userLoading}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Registering...
+                          </>
+                        ) : (
+                          'Register Patient'
+                        )}
+                      </Button>
+                    </div>
+                  </fieldset>
                 </form>
               </Form>
             </CardContent>
