@@ -13,6 +13,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import { decrypt } from '@/lib/crypto';
 
 type MedicalChartBotProps = {
   patient: Patient;
@@ -28,6 +29,7 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [decryptedHistory, setDecryptedHistory] = useState<string | null>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -39,10 +41,14 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
         });
     }
   }, [messages]);
+  
+  useEffect(() => {
+    decrypt(patient.history).then(setDecryptedHistory);
+  }, [patient.history]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim() || isLoading) return;
+    if (!query.trim() || isLoading || decryptedHistory === null) return;
 
     const userMessage: Message = { role: 'user', content: query };
     setMessages((prev) => [...prev, userMessage]);
@@ -59,7 +65,7 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
                 name: patient.name,
                 age: patient.age,
                 gender: patient.gender,
-                history: patient.history,
+                history: decryptedHistory, // Use decrypted history
             },
             latestScan: {
                 analysis: latestScan.analysis!,
@@ -141,9 +147,9 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="e.g., What is the primary diagnosis?"
-                    disabled={isLoading}
+                    disabled={isLoading || decryptedHistory === null}
                 />
-                <Button type="submit" disabled={isLoading || !query.trim()}>
+                <Button type="submit" disabled={isLoading || !query.trim() || decryptedHistory === null}>
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     <span className="sr-only">Send</span>
                 </Button>

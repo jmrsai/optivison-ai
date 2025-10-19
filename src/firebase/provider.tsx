@@ -1,4 +1,3 @@
-
 // src/firebase/provider.tsx
 'use client';
 import {
@@ -12,6 +11,7 @@ import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Database } from 'firebase/database';
 import type { Analytics } from 'firebase/analytics';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContext {
   firebaseApp: FirebaseApp;
@@ -44,7 +44,12 @@ export function FirebaseProvider(
     };
   }, [firebaseApp, auth, firestore, database, analytics]);
 
-  return <Context.Provider value={value}>{props.children}</Context.Provider>;
+  return (
+    <Context.Provider value={value}>
+        {props.children}
+        <FirebaseErrorListener />
+    </Context.Provider>
+  );
 }
 
 export function useFirebase() {

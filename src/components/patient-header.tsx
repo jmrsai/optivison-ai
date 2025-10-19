@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
+import { decrypt } from '@/lib/crypto';
 
 type PatientHeaderProps = {
   patient: Patient;
@@ -27,13 +28,18 @@ const getRiskBadgeClass = (riskLevel: Patient['riskLevel']) => {
 
 export function PatientHeader({ patient }: PatientHeaderProps) {
   const [formattedDate, setFormattedDate] = useState('');
+  const [decryptedHistory, setDecryptedHistory] = useState('Loading history...');
 
   useEffect(() => {
-    // Format date on the client-side to avoid hydration mismatch
     if (patient.lastVisit) {
       setFormattedDate(format(new Date(patient.lastVisit), 'PPP'));
     }
   }, [patient.lastVisit]);
+
+  useEffect(() => {
+    decrypt(patient.history).then(setDecryptedHistory);
+  }, [patient.history]);
+
 
   return (
     <Card className="overflow-hidden shadow-sm no-print">
@@ -72,7 +78,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
       <CardContent className="p-6">
          <div>
             <h4 className="font-semibold text-sm text-foreground">Patient Medical History</h4>
-            <p className="text-sm mt-2 text-foreground/90 max-w-prose whitespace-pre-wrap">{patient.history}</p>
+            <p className="text-sm mt-2 text-foreground/90 max-w-prose whitespace-pre-wrap">{decryptedHistory}</p>
         </div>
       </CardContent>
     </Card>

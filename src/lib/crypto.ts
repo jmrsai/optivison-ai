@@ -62,7 +62,7 @@ async function getKey(): Promise<CryptoKey> {
  * @returns A string containing the IV and the ciphertext, separated by a dot.
  */
 export async function encrypt(plaintext: string): Promise<string> {
-  if (!isBrowser()) return plaintext; 
+  if (!isBrowser() || !plaintext) return plaintext; 
   try {
     const key = await getKey();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));

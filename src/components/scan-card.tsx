@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
-import { AlertCircle, CheckCircle, FileText, Loader, Printer } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader, Printer } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PrintableReport } from './printable-report';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { createRoot } from 'react-dom/client';
+import { decrypt } from '@/lib/crypto';
+
 
 type ScanCardProps = {
   scan: Scan;
@@ -42,6 +45,13 @@ const FailedState = () => (
 
 export function ScanCard({ scan, patient }: ScanCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [decryptedNotes, setDecryptedNotes] = useState('N/A');
+
+  useEffect(() => {
+    if (scan.clinicalNotes) {
+      decrypt(scan.clinicalNotes).then(setDecryptedNotes);
+    }
+  }, [scan.clinicalNotes]);
 
   const handleDownload = async () => {
     if (isDownloading || !scan.analysis || !scan.report) return;
@@ -49,20 +59,16 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     setIsDownloading(true);
 
     const reportElement = document.createElement('div');
-    // Style the new div to be off-screen
     reportElement.style.position = 'absolute';
     reportElement.style.left = '-9999px';
     reportElement.style.top = 'auto';
     reportElement.style.width = '800px'; 
     document.body.appendChild(reportElement);
 
-    const { createRoot } = await import('react-dom/client');
     const root = createRoot(reportElement);
     
-    // Render the PrintableReport component into the off-screen div
     root.render(<PrintableReport scan={scan} patient={patient} />);
 
-    // Allow time for the component to render
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
@@ -93,7 +99,6 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     } catch (error) {
         console.error("Failed to generate PDF:", error);
     } finally {
-        // Cleanup: unmount component and remove the div
         root.unmount();
         document.body.removeChild(reportElement);
         setIsDownloading(false);
@@ -132,7 +137,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
         <div className="flex justify-between items-start">
             <div>
                 <CardTitle>Scan from {scan.date}</CardTitle>
-                <CardDescription>Clinical Notes: {scan.clinicalNotes || 'N/A'}</CardDescription>
+                <CardDescription>Clinical Notes: {decryptedNotes}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {getStatusBadge()}

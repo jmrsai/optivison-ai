@@ -3,6 +3,9 @@
 import type { Patient, Scan } from '@/lib/types';
 import Image from 'next/image';
 import { Logo } from './icons';
+import { useState, useEffect } from 'react';
+import { decrypt } from '@/lib/crypto';
+
 
 type PrintableReportProps = {
   scan: Scan;
@@ -25,6 +28,19 @@ const InfoPair = ({ label, value }: { label: string, value: React.ReactNode }) =
 
 
 export function PrintableReport({ scan, patient }: PrintableReportProps) {
+  const [decryptedData, setDecryptedData] = useState({ history: '', notes: '' });
+
+  useEffect(() => {
+    const decryptData = async () => {
+      const [history, notes] = await Promise.all([
+        decrypt(patient.history),
+        decrypt(scan.clinicalNotes || ''),
+      ]);
+      setDecryptedData({ history, notes });
+    };
+    decryptData();
+  }, [patient.history, scan.clinicalNotes]);
+  
   if (!scan.analysis || !scan.report) {
     return null; // Don't render if analysis is missing
   }
@@ -55,11 +71,11 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
           <InfoPair label="Patient ID" value={patient.id} />
           <div className="col-span-4 mt-2">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Patient Medical History</p>
-             <p className="font-semibold whitespace-pre-wrap">{patient.history}</p>
+             <p className="font-semibold whitespace-pre-wrap">{decryptedData.history || 'N/A'}</p>
           </div>
            <div className="col-span-4 mt-1">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Clinical Notes for this Scan</p>
-             <p className="font-semibold whitespace-pre-wrap">{scan.clinicalNotes || 'N/A'}</p>
+             <p className="font-semibold whitespace-pre-wrap">{decryptedData.notes || 'N/A'}</p>
           </div>
         </div>
       </Section>
