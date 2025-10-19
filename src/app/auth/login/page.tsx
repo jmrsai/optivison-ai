@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -17,6 +18,9 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, Recapt
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { countries } from '@/lib/countries';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -24,10 +28,8 @@ const formSchema = z.object({
 });
 
 const phoneFormSchema = z.object({
-    phoneNumber: z.string().refine(
-        (value) => /^\+[1-9]\d{1,14}$/.test(value),
-        { message: 'Please enter a valid phone number in E.164 format (e.g., +919876543210).' }
-    ),
+    countryCode: z.string().min(1, { message: "Please select a country." }),
+    phoneNumber: z.string().min(5, { message: "Please enter a valid phone number."}),
     verificationCode: z.string().optional(),
 });
 
@@ -52,6 +54,7 @@ export default function LoginPage() {
   const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
     defaultValues: {
+        countryCode: '+91',
         phoneNumber: '',
         verificationCode: ''
     }
@@ -99,9 +102,10 @@ export default function LoginPage() {
   const handleSendVerificationCode = async (data: z.infer<typeof phoneFormSchema>) => {
     if (!auth || !recaptchaVerifier.current) return;
     setIsSubmittingPhone(true);
+    const fullPhoneNumber = `${data.countryCode}${data.phoneNumber}`;
     try {
         const verifier = recaptchaVerifier.current;
-        const result = await signInWithPhoneNumber(auth, data.phoneNumber, verifier);
+        const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         toast({
             title: "Verification Code Sent",
@@ -232,19 +236,43 @@ export default function LoginPage() {
                        <Form {...phoneForm}>
                             <form onSubmit={phoneForm.handleSubmit(isCodeSent ? handleVerifyCode : handleSendVerificationCode)} className="space-y-6 pt-6">
                                 <fieldset disabled={isSubmittingPhone}>
-                                    <FormField
-                                    control={phoneForm.control}
-                                    name="phoneNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
+                                    <FormItem>
                                         <FormLabel>Phone Number</FormLabel>
-                                        <FormControl>
-                                            <Input type="tel" placeholder="+919876543210" {...field} disabled={isCodeSent} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
+                                        <div className="flex gap-2">
+                                            <FormField
+                                                control={phoneForm.control}
+                                                name="countryCode"
+                                                render={({ field }) => (
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isCodeSent}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="w-[120px]">
+                                                                <SelectValue placeholder="Code" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <ScrollArea className="h-64">
+                                                                {countries.map(country => (
+                                                                    <SelectItem key={country.code} value={country.dial_code}>
+                                                                        {country.code} ({country.dial_code})
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </ScrollArea>
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={phoneForm.control}
+                                                name="phoneNumber"
+                                                render={({ field }) => (
+                                                    <FormControl>
+                                                        <Input type="tel" placeholder="9876543210" {...field} disabled={isCodeSent} />
+                                                    </FormControl>
+                                                )}
+                                            />
+                                        </div>
+                                        <FormMessage>{phoneForm.formState.errors.phoneNumber?.message}</FormMessage>
+                                    </FormItem>
                                    {isCodeSent && (
                                      <FormField
                                         control={phoneForm.control}
@@ -304,6 +332,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
-    
