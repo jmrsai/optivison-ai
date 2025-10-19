@@ -31,9 +31,9 @@ const analyzeEyeScanPrompt = ai.definePrompt({
 - Clinical Notes: {{{clinicalNotes}}}
 - Eye Scan: {{media url=eyeScanDataUri}}
 
-{{#if documentDataUri}}
-**External Medical Document:**
-- Attached Document: {{media url=documentDataUri}}
+{{#if documentSummary}}
+**External Medical Document Summary:**
+- Attached Document Summary: {{{documentSummary}}}
 {{/if}}
 
 

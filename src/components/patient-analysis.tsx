@@ -7,6 +7,7 @@ import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
 import { ScanCard } from '@/components/scan-card';
 import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
+import { analyzeDocument } from '@/ai/flows/document-analysis';
 import type { DocumentAnalysisOutput } from '@/ai/types';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
@@ -75,7 +76,13 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
 
     try {
         const eyeScanDataUri = await fileToDataUri(imageFile);
-        const documentDataUri = documentFile ? await fileToDataUri(documentFile) : undefined;
+        let documentSummary: string | undefined;
+
+        if (documentFile) {
+            const documentDataUri = await fileToDataUri(documentFile);
+            const docAnalysisResult = await analyzeDocument({ documentDataUri });
+            documentSummary = docAnalysisResult.summary;
+        }
         
         // Decrypt patient history for the AI
         const decryptedHistory = await decrypt(patient.history);
@@ -84,7 +91,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             eyeScanDataUri,
             patientHistory: decryptedHistory,
             clinicalNotes,
-            documentDataUri,
+            documentSummary,
         });
         
         const finalScan: Scan = {

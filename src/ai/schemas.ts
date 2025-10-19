@@ -14,11 +14,11 @@ export const AnalyzeEyeScanInputSchema = z.object({
     .string()
     .optional()
     .describe('Any clinical notes or observations about the patient.'),
-  documentDataUri: z
+  documentSummary: z
     .string()
     .optional()
     .describe(
-      "An optional medical document (PDF, image) as a data URI for additional context."
+      "An optional summary of a medical document for additional context."
     ),
 });
 
