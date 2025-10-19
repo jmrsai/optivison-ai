@@ -7,7 +7,6 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
 import type { AnalyzeEyeScanInput, AnalyzeEyeScanOutput } from '@/ai/types';
 import { AnalyzeEyeScanInputSchema, AnalyzeEyeScanOutputSchema } from '@/ai/schemas';
 
@@ -23,7 +22,7 @@ const analyzeEyeScanPrompt = ai.definePrompt({
 
 **Workflow:**
 1.  **Image Analysis**: First, meticulously analyze the input eye scan image. Your internal model should perform segmentation of key structures (optic nerve, macula, blood vessels) and extract relevant features and biomarkers.
-2.  **Correlate with Textual Data**: Next, correlate the visual findings from the image with the provided patient history, clinical notes, and the analysis from any external medical document. Use this context to refine your initial assessment.
+2.  **Multi-Modal Correlation**: Next, correlate the visual findings from the image with the provided patient history, clinical notes, and the full content of any external medical document. Use this complete context to refine your initial assessment.
 3.  **Pattern Recognition**: Compare the combined features against known patterns of ophthalmic diseases.
 4.  **Diagnosis and Reporting**: Finally, generate a detailed report based on your complete, synthesized analysis of all available information.
 
@@ -32,16 +31,14 @@ const analyzeEyeScanPrompt = ai.definePrompt({
 - Clinical Notes: {{{clinicalNotes}}}
 - Eye Scan: {{media url=eyeScanDataUri}}
 
-{{#if documentAnalysis}}
-**External Medical Document Analysis Summary:**
-- Diagnoses Mentioned: {{#if documentAnalysis.diagnoses.length}} {{#each documentAnalysis.diagnoses}} {{{this}}}{{#unless @last}}, {{/unless}}{{/each}} {{else}}None{{/if}}
-- Medications Mentioned: {{#if documentAnalysis.medications.length}} {{#each documentAnalysis.medications}} {{{this}}}{{#unless @last}}, {{/unless}}{{/each}} {{else}}None{{/if}}
-- Key Recommendations: {{{documentAnalysis.recommendations}}}
+{{#if documentDataUri}}
+**External Medical Document:**
+- Attached Document: {{media url=documentDataUri}}
 {{/if}}
 
 
 **Analysis Task:**
-Based on the provided information and following the workflow above, perform a full diagnostic analysis. Pay special attention to early detection of diseases by identifying subtle biomarkers. Fill out all fields in the output schema with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical, suitable for a medical expert. Reference the deep learning model's findings (e.g., "segmentation reveals...", "feature extraction identified...").`,
+Based on all the provided information and following the workflow above, perform a full diagnostic analysis. Pay special attention to early detection of diseases by identifying subtle biomarkers. Fill out all fields in the output schema with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical, suitable for a medical expert. Reference the deep learning model's findings (e.g., "segmentation reveals...", "feature extraction identified...").`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

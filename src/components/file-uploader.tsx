@@ -1,23 +1,26 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { UploadCloud, X } from 'lucide-react';
+import { useDropzone, Accept } from 'react-dropzone';
+import { UploadCloud, X, File as FileIcon } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 
 type FileUploaderProps = {
   onFileSelect: (file: File | null) => void;
+  accept: Accept;
 };
 
-export function FileUploader({ onFileSelect }: FileUploaderProps) {
+export function FileUploader({ onFileSelect, accept }: FileUploaderProps) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
+        setFileType(file.type);
         setPreview(URL.createObjectURL(file));
         onFileSelect(file);
       }
@@ -27,24 +30,34 @@ export function FileUploader({ onFileSelect }: FileUploaderProps) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': ['.jpeg', '.png', '.gif', '.bmp', '.tiff'] },
+    accept: accept,
     multiple: false,
   });
 
   const removePreview = (e: React.MouseEvent) => {
     e.stopPropagation();
     setPreview(null);
+    setFileType(null);
     onFileSelect(null);
     if (preview) {
       URL.revokeObjectURL(preview);
     }
   };
 
+  const isImage = fileType && fileType.startsWith('image/');
+
   return (
     <div>
       {preview ? (
-        <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-dashed border-primary/50">
-          <Image src={preview} alt="Scan preview" fill objectFit="contain" />
+        <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-primary/50 flex items-center justify-center bg-muted/20">
+          {isImage ? (
+            <Image src={preview} alt="File preview" fill objectFit="contain" />
+          ) : (
+            <div className="flex flex-col items-center text-center p-4">
+              <FileIcon className="w-16 h-16 text-muted-foreground" />
+              <p className="text-sm font-medium mt-2 text-foreground truncate max-w-full">{preview.split('/').pop()}</p>
+            </div>
+          )}
           <Button
             variant="destructive"
             size="icon"
@@ -58,7 +71,7 @@ export function FileUploader({ onFileSelect }: FileUploaderProps) {
         <div
           {...getRootProps()}
           className={cn(
-            'flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors',
+            'flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors',
             isDragActive ? 'border-primary' : 'border-border'
           )}
         >
@@ -68,7 +81,9 @@ export function FileUploader({ onFileSelect }: FileUploaderProps) {
             <p className="mb-2 text-sm text-muted-foreground">
               <span className="font-semibold text-primary">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-muted-foreground">OCT, fundus, or other scan images</p>
+            <p className="text-xs text-muted-foreground">
+              {Object.values(accept).flatMap(val => val).join(', ').toUpperCase()}
+            </p>
           </div>
         </div>
       )}

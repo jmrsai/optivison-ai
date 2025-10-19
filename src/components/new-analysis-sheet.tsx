@@ -60,14 +60,14 @@ export function NewAnalysisSheet({ isOpen, onOpenChange, onSubmit }: NewAnalysis
           <div className="grid gap-6 py-6">
             <div className="grid gap-2">
               <Label htmlFor="scan-image">1. Eye Scan Image (Required)</Label>
-              <FileUploader onFileSelect={setImageFile} />
+              <FileUploader onFileSelect={setImageFile} accept={{ 'image/*': ['.jpeg', '.png', '.gif', '.bmp', '.tiff'] }} />
             </div>
 
             <Separator />
             
             <div className="grid gap-2">
-              <Label htmlFor="scan-image">2. Medical Document (Optional)</Label>
-              <FileUploader onFileSelect={setDocumentFile} />
+              <Label htmlFor="scan-document">2. Medical Document (Optional)</Label>
+              <FileUploader onFileSelect={setDocumentFile} accept={{ 'application/pdf': ['.pdf'], 'image/*': ['.jpeg', '.png'] }} />
               <p className="text-xs text-muted-foreground">Upload a PDF or image of a report for additional context.</p>
             </div>
 
