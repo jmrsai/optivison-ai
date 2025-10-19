@@ -40,6 +40,7 @@ export default function RegisterPage() {
   const isSubmitting = form.formState.isSubmitting;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!auth) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       
@@ -66,6 +67,7 @@ export default function RegisterPage() {
   }
 
   const handleSocialLogin = async (provider: 'google') => {
+    if (!auth) return;
     const authProvider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, authProvider);

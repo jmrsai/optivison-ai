@@ -3,14 +3,11 @@
 
 import { AppHeader } from '@/components/layout/app-header';
 import { PatientList } from '@/components/patient-list';
-import { getPatients } from '@/lib/patient-service';
-import { getScans } from '@/lib/scan-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle, LogIn } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import type { Patient, Scan } from '@/lib/types';
+import type { Patient } from '@/lib/types';
 import { useUser } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, query, where } from 'firebase/firestore';
@@ -33,7 +30,7 @@ function StatCard({ title, value, icon: Icon, loading }: { title: string; value:
 
 
 export default function DashboardPage() {
-  const { user, loading: userLoading, error: userError } = useUser();
+  const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
 

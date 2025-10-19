@@ -28,6 +28,7 @@ export function AppHeader() {
   const { toast } = useToast();
   
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast({
@@ -121,14 +122,14 @@ export function AppHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px]">
                 <SheetHeader className="border-b pb-4">
-                   <Link href="/" className="flex items-center gap-2">
-                    <Logo className="h-7 w-7 text-primary" />
-                    <span className="text-lg font-bold text-foreground">OptiVision AI</span>
-                  </Link>
                    <SheetTitle className="sr-only">Menu</SheetTitle>
                    <SheetDescription className="sr-only">
                         Main navigation menu for OptiVision AI, providing links to the dashboard, patient registration, and settings.
                    </SheetDescription>
+                   <Link href="/" className="flex items-center gap-2">
+                    <Logo className="h-7 w-7 text-primary" />
+                    <span className="text-lg font-bold text-foreground">OptiVision AI</span>
+                  </Link>
                 </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium mt-6">
                  {user ? (
