@@ -5,7 +5,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { PatientList } from '@/components/patient-list';
 import { getPatients } from '@/lib/patient-service';
 import { getScans } from '@/lib/scan-service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle, LogIn } from 'lucide-react';
