@@ -123,3 +123,23 @@ export const MedicalChartBotInputSchema = z.object({
 export const MedicalChartBotOutputSchema = z.object({
     response: z.string().describe("The AI's answer to the clinician's query."),
 });
+
+
+// Schemas for Strabismus Analysis
+export const StrabismusAnalysisInputSchema = z.object({
+  eyeImageDataUri: z
+    .string()
+    .describe(
+      "An image of a patient's eyes as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+
+export const StrabismusAnalysisOutputSchema = z.object({
+  diagnosis: z.object({
+    hasStrabismus: z.boolean().describe('Whether signs of strabismus were detected.'),
+    confidence: z.number().min(0).max(1).describe('The confidence level of the diagnosis (0 to 1).'),
+    type: z.string().optional().describe('If strabismus is detected, the potential type (e.g., Esotropia, Exotropia).'),
+  }),
+  observations: z.string().describe('Detailed observations from the image analysis, such as notes on eye alignment and light reflection.'),
+  nextSteps: z.string().describe('Recommended next steps, which should always include consulting a specialist.'),
+});

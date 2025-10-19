@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
-import { Menu, Home, Settings, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Menu, Home, Settings, LogIn, LogOut, UserPlus, Search } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -60,6 +60,9 @@ export function AppHeader() {
               <>
                  <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
                   Dashboard
+                </Link>
+                <Link href="/strabismus" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                  Strabismus Analysis
                 </Link>
                  <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
                   Settings
@@ -142,6 +145,10 @@ export function AppHeader() {
                     <Link href="/" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                       <Home className="h-5 w-5" />
                       Dashboard
+                    </Link>
+                     <Link href="/strabismus" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                      <Search className="h-5 w-5" />
+                      Strabismus
                     </Link>
                     <Link href="/settings" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                       <Settings className="h-5 w-5" />
