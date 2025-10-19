@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
-import { Menu, Home, UserPlus, Settings, LogIn, LogOut } from 'lucide-react';
+import { Menu, Home, Settings, LogIn, LogOut, UserPlus } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -61,9 +61,6 @@ export function AppHeader() {
                  <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
                   Dashboard
                 </Link>
-                 <Link href="/register" className="transition-colors hover:text-foreground/80 text-foreground/60">
-                  Register Patient
-                </Link>
                  <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
                   Settings
                 </Link>
@@ -105,12 +102,20 @@ export function AppHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <Button asChild variant="outline">
-                <Link href="/auth/login">
-                  <LogIn className="mr-2 h-4 w-4"/>
-                  Login
-                </Link>
-              </Button>
+             <div className="flex items-center gap-2">
+                <Button asChild variant="outline">
+                    <Link href="/auth/login">
+                    <LogIn className="mr-2 h-4 w-4"/>
+                    Login
+                    </Link>
+                </Button>
+                <Button asChild>
+                    <Link href="/auth/register">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Register
+                    </Link>
+                </Button>
+            </div>
           )}
 
           <Sheet>
@@ -121,14 +126,14 @@ export function AppHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px]">
-                <SheetHeader className="border-b pb-4">
-                   <SheetTitle className="sr-only">Menu</SheetTitle>
+                <SheetHeader>
+                   <SheetTitle>OptiVision AI</SheetTitle>
                    <SheetDescription className="sr-only">
                         Main navigation menu for OptiVision AI, providing links to the dashboard, patient registration, and settings.
                    </SheetDescription>
                    <Link href="/" className="flex items-center gap-2">
                     <Logo className="h-7 w-7 text-primary" />
-                    <span className="text-lg font-bold text-foreground">OptiVision AI</span>
+                    <span className="text-lg font-bold text-foreground sr-only">OptiVision AI</span>
                   </Link>
                 </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium mt-6">
@@ -137,10 +142,6 @@ export function AppHeader() {
                     <Link href="/" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                       <Home className="h-5 w-5" />
                       Dashboard
-                    </Link>
-                    <Link href="/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                      <UserPlus className="h-5 w-5" />
-                      Register Patient
                     </Link>
                     <Link href="/settings" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                       <Settings className="h-5 w-5" />
@@ -152,10 +153,16 @@ export function AppHeader() {
                     </button>
                   </>
                 ) : (
-                  <Link href="/auth/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                    <LogIn className="h-5 w-5" />
-                    Login
-                  </Link>
+                  <>
+                    <Link href="/auth/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                      <LogIn className="h-5 w-5" />
+                      Login
+                    </Link>
+                    <Link href="/auth/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                        <UserPlus className="h-5 w-5" />
+                        Register
+                    </Link>
+                  </>
                 )}
               </nav>
             </SheetContent>
