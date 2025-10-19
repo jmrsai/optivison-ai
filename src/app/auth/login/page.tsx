@@ -25,7 +25,7 @@ const formSchema = z.object({
 
 const phoneFormSchema = z.object({
     phoneNumber: z.string().refine(
-        (value) => /^\+[1-9]\d{1,14}$/.test(value),
+        (value) => /^\+\d{10,15}$/.test(value),
         { message: 'Please enter a valid phone number in E.164 format (e.g., +11234567890).' }
     ),
     verificationCode: z.string().optional(),
