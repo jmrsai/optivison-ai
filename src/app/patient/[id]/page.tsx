@@ -15,6 +15,7 @@ import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { updatePatient } from '@/lib/patient-service';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemoFirebase } from '@/hooks/use-memo-firebase';
+import { MedicalChartBot } from '@/components/medical-chart-bot';
 
 export default function PatientPage() {
   const params = useParams();
@@ -36,6 +37,8 @@ export default function PatientPage() {
   
   const patient = patientDoc?.data() ? { id: patientDoc.id, ...patientDoc.data() } as Patient : null;
   const scans = scansCollection?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan)) || [];
+  const completedScans = scans.filter(s => s.status === 'completed' && s.analysis);
+
 
   const handlePatientUpdate = async (updatedPatient: Partial<Patient>) => {
     if (!id) return;
@@ -90,6 +93,9 @@ export default function PatientPage() {
         </div>
         <div className="space-y-8">
           <PatientHeader patient={patient} />
+           {completedScans.length > 0 && (
+             <MedicalChartBot patient={patient} scans={completedScans} />
+           )}
           <Card className="shadow-sm">
             <CardContent className="p-6">
               <PatientAnalysis patient={patient} initialScans={scans} onPatientUpdate={handlePatientUpdate} />

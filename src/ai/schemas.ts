@@ -95,3 +95,31 @@ export const LongitudinalAnalysisOutputSchema = z.object({
     ),
   chartData: z.array(ChartDataPointSchema).describe('An array of data points for plotting risk over time. The array should be sorted by date in ascending order.'),
 });
+
+const PatientSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    age: z.number(),
+    gender: z.string(),
+    history: z.string(),
+});
+
+const ScanAnalysisForBotSchema = z.object({
+    analysis: AnalysisSchema.pick({
+        diagnosticInsights: true,
+        potentialAbnormalities: true,
+        riskLevel: true,
+        recommendations: true,
+    }),
+});
+
+export const MedicalChartBotInputSchema = z.object({
+  patient: PatientSchema,
+  latestScan: ScanAnalysisForBotSchema,
+  historicalScans: z.array(ScanAnalysisForBotSchema.extend({ date: z.string() })),
+  query: z.string().describe("The clinician's question about the patient's chart."),
+});
+
+export const MedicalChartBotOutputSchema = z.object({
+    response: z.string().describe("The AI's answer to the clinician's query."),
+});
