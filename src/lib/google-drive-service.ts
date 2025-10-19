@@ -4,7 +4,10 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { google } from 'googleapis';
-import { getAllDataForClinician } from './patient-service';
+import { initializeServerApp } from '@/firebase/server-provider';
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
+import { collection, query, where, getDocs, type DocumentData } from 'firebase/firestore';
+import type { Patient, Scan } from './types';
 
 const drive = google.drive('v3');
 
@@ -13,6 +16,30 @@ async function getAuthenticatedClient(idToken: string) {
     auth.setCredentials({ id_token: idToken });
     google.options({ auth });
     return auth;
+}
+
+/**
+ * Fetches all patients and their associated scans for a given clinician.
+ * This is intended for server-side use.
+ * @param clinicianId The UID of the clinician.
+ * @returns An object containing lists of patients and scans.
+ */
+async function getAllDataForClinician(clinicianId: string): Promise<{ patients: Patient[], scans: Scan[] }> {
+    const adminApp = initializeServerApp();
+    const firestore = getAdminFirestore(adminApp);
+
+    const patientsQuery = query(collection(firestore, 'patients'), where('clinicianId', '==', clinicianId));
+    const scansQuery = query(collection(firestore, 'scans'), where('clinicianId', '==', clinicianId));
+
+    const [patientSnap, scanSnap] = await Promise.all([
+        getDocs(patientsQuery),
+        getDocs(scansQuery),
+    ]);
+
+    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Patient));
+    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Scan));
+
+    return { patients, scans };
 }
 
 export const exportDataToDrive = ai.defineFlow(
