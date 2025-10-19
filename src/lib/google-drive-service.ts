@@ -6,7 +6,6 @@ import { z } from 'genkit';
 import { google } from 'googleapis';
 import { initializeServerApp } from '@/firebase/server-provider';
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
-import { collection, query, where, getDocs, type DocumentData } from 'firebase/firestore';
 import type { Patient, Scan } from './types';
 
 const drive = google.drive('v3');
@@ -28,16 +27,17 @@ async function getAllDataForClinician(clinicianId: string): Promise<{ patients: 
     const adminApp = initializeServerApp();
     const firestore = getAdminFirestore(adminApp);
 
-    const patientsQuery = query(collection(firestore, 'patients'), where('clinicianId', '==', clinicianId));
-    const scansQuery = query(collection(firestore, 'scans'), where('clinicianId', '==', clinicianId));
+    const patientsQuery = firestore.collection('patients').where('clinicianId', '==', clinicianId);
+    const scansQuery = firestore.collection('scans').where('clinicianId', '==', clinicianId);
+
 
     const [patientSnap, scanSnap] = await Promise.all([
-        getDocs(patientsQuery),
-        getDocs(scansQuery),
+        patientsQuery.get(),
+        scansQuery.get(),
     ]);
 
-    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Patient));
-    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Scan));
+    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Patient));
+    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan));
 
     return { patients, scans };
 }
