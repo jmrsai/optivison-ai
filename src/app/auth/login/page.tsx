@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 const phoneFormSchema = z.object({
     phoneNumber: z.string().refine(
-        (value) => /^\+\d{10,15}$/.test(value),
-        { message: 'Please enter a valid phone number in E.164 format (e.g., +11234567890).' }
+        (value) => /^\+[1-9]\d{1,14}$/.test(value),
+        { message: 'Please enter a valid phone number in E.164 format (e.g., +919876543210).' }
     ),
     verificationCode: z.string().optional(),
 });
@@ -239,7 +239,7 @@ export default function LoginPage() {
                                         <FormItem>
                                         <FormLabel>Phone Number</FormLabel>
                                         <FormControl>
-                                            <Input type="tel" placeholder="+11234567890" {...field} disabled={isCodeSent} />
+                                            <Input type="tel" placeholder="+919876543210" {...field} disabled={isCodeSent} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -305,4 +305,5 @@ export default function LoginPage() {
   );
 }
 
+    
     
