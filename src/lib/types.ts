@@ -1,5 +1,6 @@
-import type { AnalyzeEyeScanOutput } from "@/ai/types";
+import type { AnalyzeEyeScanOutputSchema } from "@/ai/schemas";
 import type { Timestamp } from "firebase/firestore";
+import { z } from "genkit";
 
 export type Patient = {
   id: string;
@@ -13,6 +14,11 @@ export type Patient = {
   history: string;
 };
 
+// We only need the 'analysis' part of the schema for the scan type
+const ScanAnalysisSchema = AnalyzeEyeScanOutputSchema.shape.analysis;
+type ScanAnalysis = z.infer<typeof ScanAnalysisSchema>;
+
+
 export type Scan = {
   id: string;
   patientId: string;
@@ -21,7 +27,7 @@ export type Scan = {
   imageUrl: string;
   clinicalNotes: string;
   status: 'completed' | 'processing' | 'failed';
-  analysis?: AnalyzeEyeScanOutput;
+  analysis?: ScanAnalysis;
   report?: string;
   createdAt?: Timestamp;
 };

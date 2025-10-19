@@ -1,28 +1,6 @@
 import {z} from 'genkit';
 
-export const AnalyzeEyeScanInputSchema = z.object({
-  eyeScanDataUri: z
-    .string()
-    .describe(
-      "An eye scan image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-  patientHistory: z
-    .string()
-    .optional()
-    .describe("The patient's medical history related to eye health."),
-  clinicalNotes: z
-    .string()
-    .optional()
-    .describe('Any clinical notes or observations about the patient.'),
-  documentSummary: z
-    .string()
-    .optional()
-    .describe(
-      "An optional summary of a medical document for additional context."
-    ),
-});
-
-export const AnalyzeEyeScanOutputSchema = z.object({
+const AnalysisSchema = z.object({
   diagnosticInsights: z
     .string()
     .describe('A detailed summary of diagnostic insights based on the eye scan analysis. Reference specific biomarkers or features detected by the deep learning model.'),
@@ -60,32 +38,33 @@ export const AnalyzeEyeScanOutputSchema = z.object({
     .describe('Recommendations for next steps, such as specialist referrals or further imaging.'),
 });
 
-export const DocumentAnalysisInputSchema = z.object({
-  documentDataUri: z
-    .string()
-    .describe(
-      "A medical document as a data URI that must include a MIME type and use Base64 encoding. Can be an image or a PDF. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-
-export const DocumentAnalysisOutputSchema = z.object({
-  summary: z.string().describe('A concise summary of the entire document.'),
-  diagnoses: z.array(z.string()).describe('A list of all medical diagnoses mentioned in the document.'),
-  medications: z.array(z.string()).describe('A list of all medications mentioned in the document.'),
-  recommendations: z.string().describe('A summary of the key recommendations or treatment plans from the document.'),
-});
-
-export const GeneratePatientReportInputSchema = z.object({
+export const AnalyzeEyeScanInputSchema = z.object({
   patientName: z.string().describe("The patient's full name."),
   patientAge: z.number().describe("The patient's age."),
   patientGender: z.string().describe("The patient's gender."),
-  scanDate: z.string().describe("The date of the scan."),
-  clinicalNotes: z.string().optional().describe('The clinical notes for the scan.'),
-  analysis: AnalyzeEyeScanOutputSchema.describe("The full AI analysis object from the 'analyzeEyeScan' flow."),
-  patientHistory: z.string().describe('The patient history for longitudinal analysis.'),
+  patientHistory: z
+    .string()
+    .describe("The patient's medical history related to eye health."),
+  scanDate: z.string().describe("The date the scan was performed."),
+  eyeScanDataUri: z
+    .string()
+    .describe(
+      "An eye scan image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+  clinicalNotes: z
+    .string()
+    .optional()
+    .describe('Any clinical notes or observations about the patient for this specific scan.'),
+  documentDataUri: z
+    .string()
+    .optional()
+    .describe(
+      "An optional medical document as a data URI for additional context. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 
-export const GeneratePatientReportOutputSchema = z.object({
+export const AnalyzeEyeScanOutputSchema = z.object({
+  analysis: AnalysisSchema.describe("The structured diagnostic analysis object."),
   report: z.string().describe('The comprehensive patient report in a structured, professional format, using markdown for section headers.'),
 });
 

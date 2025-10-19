@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview AI-driven diagnostics flow for analyzing eye scans and providing diagnostic insights.
+ * @fileOverview AI-driven diagnostics flow for analyzing eye scans and providing a full diagnostic report.
  *
- * - analyzeEyeScan - A function that analyzes an uploaded eye scan and provides diagnostic insights.
+ * - analyzeEyeScan - A function that analyzes an uploaded eye scan and provides diagnostic insights and a final report.
  */
 
 import {ai} from '@/ai/genkit';
@@ -18,27 +18,66 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist AI, a state-of-the-art deep learning-powered clinical decision support system. Your task is to perform a comprehensive, A-to-Z analysis of an eye scan image, correlating it with patient history and any provided medical documents.
+  prompt: `You are an expert ophthalmologist AI, a state-of-the-art deep learning-powered clinical decision support system. Your task is to perform a comprehensive, A-to-Z analysis and generate a full report.
 
 **Workflow:**
-1.  **Image Analysis**: First, meticulously analyze the input eye scan image. Your internal model should perform segmentation of key structures (optic nerve, macula, blood vessels) and extract relevant features and biomarkers.
-2.  **Multi-Modal Correlation**: Next, correlate the visual findings from the image with the provided patient history, clinical notes, and the full content of any external medical document. Use this complete context to refine your initial assessment.
+1.  **Image Analysis**: First, meticulously analyze the input eye scan image. Your internal model should perform segmentation of key structures and extract relevant biomarkers.
+2.  **Multi-Modal Correlation**: If a medical document is provided, analyze it and correlate its findings with the visual data from the image, the patient history, and clinical notes. Use this complete context to refine your assessment.
 3.  **Pattern Recognition**: Compare the combined features against known patterns of ophthalmic diseases.
-4.  **Diagnosis and Reporting**: Finally, generate a detailed report based on your complete, synthesized analysis of all available information.
+4.  **Diagnosis and Reporting**: Generate a detailed diagnostic assessment and a full, professional patient report suitable for medical records.
 
 **Patient Information:**
+- Name: {{{patientName}}}
+- Age: {{{patientAge}}}
+- Gender: {{{patientGender}}}
+- Scan Date: {{{scanDate}}}
 - Patient History: {{{patientHistory}}}
-- Clinical Notes: {{{clinicalNotes}}}
-- Eye Scan: {{media url=eyeScanDataUri}}
-
-{{#if documentSummary}}
-**External Medical Document Summary:**
-- Attached Document Summary: {{{documentSummary}}}
+- Clinical Notes for this scan: {{{clinicalNotes}}}
+- Eye Scan Image: {{media url=eyeScanDataUri}}
+{{#if documentDataUri}}
+- External Medical Document: {{media url=documentDataUri}}
 {{/if}}
 
 
-**Analysis Task:**
-Based on all the provided information and following the workflow above, perform a full diagnostic analysis. Pay special attention to early detection of diseases by identifying subtle biomarkers. Fill out all fields in the output schema with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical, suitable for a medical expert. Reference the deep learning model's findings (e.g., "segmentation reveals...", "feature extraction identified...").`,
+**Analysis & Reporting Task:**
+Based on all the provided information, perform a full diagnostic analysis and generate a comprehensive report.
+
+**Part 1: Diagnostic Analysis**
+Fill out all fields in the output schema under the 'analysis' object with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical.
+
+**Part 2: Full Patient Report**
+Using all the information and the analysis from Part 1, generate a comprehensive, professional, A-to-Z patient report. The output must be plain text, using markdown-style headers (e.g., "**SECTION TITLE**"). This report should be stored in the 'report' field of the output schema. It should be structured and ready for inclusion in medical records.
+
+Example Report Structure:
+---
+**COMPREHENSIVE AI-POWERED OPHTHALMIC ANALYSIS**
+---
+**1. DIAGNOSTIC INSIGHTS:**
+   - AI Summary: [Your summary here]
+   - Confidence Score: [Confidence score here]
+
+**2. FINDINGS:**
+   - Identified Abnormalities: [List here]
+   - Detected Early Signs of Disease: [List here]
+   - Disease Staging: [Staging here]
+
+**3. RISK & PROGNOSIS:**
+   - Risk Assessment: [Assessment here]
+   - Current Risk Level: [Risk level here]
+   - Differential Diagnosis: [List here]
+
+**4. PROPOSED TREATMENT & MANAGEMENT:**
+   - Suggested Treatments: [List here]
+   - Prevention Suggestions: [List here]
+
+**5. FOLLOW-UP & RECOMMENDATIONS:**
+   - Follow-Up Plan: [Plan here]
+   - Further Recommendations: [Recommendations here]
+---
+**DISCLAIMER**
+This report was generated by the OptiVision AI assistant...
+---
+`,
 });
 
 const analyzeEyeScanFlow = ai.defineFlow(

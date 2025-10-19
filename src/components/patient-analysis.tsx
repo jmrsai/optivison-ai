@@ -7,8 +7,6 @@ import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
 import { ScanCard } from '@/components/scan-card';
 import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
-import { analyzeDocument } from '@/ai/flows/document-analysis';
-import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
 import { addScan, updateScan } from '@/lib/scan-service';
 import { generateLongitudinalAnalysis } from '@/ai/flows/longitudinal-analysis';
@@ -83,52 +81,38 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         scanId = await addScan(firestore, newScanPlaceholder);
 
         const eyeScanDataUri = await fileToDataUri(imageFile);
-        let documentSummary: string | undefined;
+        let documentDataUri: string | undefined;
 
         if (documentFile) {
-            const documentDataUri = await fileToDataUri(documentFile);
-            toast({ title: "Analyzing Document...", description: "The optional medical document is being analyzed." });
-            const docAnalysisResult = await analyzeDocument({ documentDataUri });
-            documentSummary = docAnalysisResult.summary;
+            documentDataUri = await fileToDataUri(documentFile);
         }
         
-        toast({ title: "Analyzing Eye Scan...", description: "The main AI analysis is now in progress." });
-        const analysisResult = await analyzeEyeScan({
-            eyeScanDataUri,
-            patientHistory: patient.history,
-            clinicalNotes,
-            documentSummary,
-        });
+        toast({ title: "AI Analysis In Progress...", description: "The AI is generating a full diagnostic report. This may take a moment." });
         
-        const scanUpdateWithAnalysis: Partial<Scan> = {
-            imageUrl: eyeScanDataUri, 
-            analysis: analysisResult,
-            status: 'completed',
-            report: 'Generating report...'
-        };
-        
-        await updateScan(firestore, scanId, scanUpdateWithAnalysis);
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...scanUpdateWithAnalysis, id: scanId! } : s)));
-
-        toast({ title: "Generating Report...", description: "The final report is being compiled." });
-        const reportResult = await generatePatientReport({
+        const result = await analyzeEyeScan({
             patientName: patient.name,
             patientAge: patient.age,
             patientGender: patient.gender,
-            scanDate: scanDate,
-            clinicalNotes: clinicalNotes,
-            analysis: analysisResult,
             patientHistory: patient.history,
+            scanDate,
+            eyeScanDataUri,
+            clinicalNotes,
+            documentDataUri,
         });
-
+        
         const finalScanUpdate: Partial<Scan> = {
-            report: reportResult.report
-        }
+            imageUrl: eyeScanDataUri,
+            analysis: result.analysis,
+            report: result.report,
+            status: 'completed',
+        };
         
         await updateScan(firestore, scanId, finalScanUpdate);
         
-        if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
-            const updatedPatient = { riskLevel: analysisResult.riskLevel, lastVisit: new Date().toISOString().split('T')[0] };
+        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...finalScanUpdate, id: scanId! } : s)));
+
+        if (result.analysis.riskLevel && result.analysis.riskLevel !== 'N/A') {
+            const updatedPatient = { riskLevel: result.analysis.riskLevel, lastVisit: scanDate };
             onPatientUpdate(updatedPatient);
         }
 
