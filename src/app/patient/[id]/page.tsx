@@ -12,8 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
-export default function PatientPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function PatientPage({ params: { id } }: { params: { id: string } }) {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
