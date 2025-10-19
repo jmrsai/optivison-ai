@@ -1,13 +1,31 @@
 
-# In this file, you can define your database schema using GraphQL.
-# For example:
-#
-# type User @table {
-#   id: ID!
-#   name: String
-#   email: String
-# }
-#
-# For more information, see the Firebase Data Connect documentation:
-# https://firebase.google.com/docs/dataconnect
+type User @table(key: "id") {
+  id: String!
+  email: String
+  displayName: String
+}
 
+type Patient @table(key: "id") {
+  id: String!
+  clinician: User!
+  name: String!
+  age: Int!
+  gender: String!
+  lastVisit: Date!
+  avatarUrl: String
+  riskLevel: String!
+  history: String!
+  scans: [Scan]! @relation(through: "Scan", from: "patient", to: "scans")
+}
+
+type Scan @table(key: "id") {
+  id: String!
+  patient: Patient!
+  clinician: User!
+  date: Date!
+  imageUrl: String!
+  clinicalNotes: String
+  status: String!
+  analysis: String
+  report: String
+}

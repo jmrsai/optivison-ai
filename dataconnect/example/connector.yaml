@@ -7,3 +7,5 @@ generate:
       packageJsonDir: ../..
       react: true
       angular: false
+schema:
+  source: "../schema"
