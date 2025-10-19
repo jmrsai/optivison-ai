@@ -17,10 +17,10 @@ const nextConfig = {
       },
     ],
   },
+  // This allows the Next.js dev server to accept requests from any origin.
+  // This is required for the development environment to work correctly.
   experimental: {
-    // This allows the Next.js dev server to accept requests from any origin.
-    // This is required for the development environment to work correctly.
-    allowedNextBundlerReactRoots: ['.'],
+    // Empty as allowedNextBundlerReactRoots has been moved.
   }
 };
 
