@@ -1,7 +1,9 @@
 
-import { addDoc, collection, doc, updateDoc, type Firestore, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, updateDoc, type Firestore, getDocs, query, where, type DocumentData } from "firebase/firestore";
 import type { Patient, Scan } from "./types";
-import { useFirestore } from "@/firebase";
+import { getFirestore as getClientFirestore } from "firebase/firestore";
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
+import { initializeServerApp } from "@/firebase/server-provider";
 
 /**
  * Adds a new patient to the Firestore database.
@@ -33,7 +35,8 @@ export async function updatePatient(firestore: Firestore, patientId: string, pat
  * @returns An object containing lists of patients and scans.
  */
 export async function getAllDataForClinician(clinicianId: string): Promise<{ patients: Patient[], scans: Scan[] }> {
-    const firestore = useFirestore();
+    const adminApp = initializeServerApp();
+    const firestore = getAdminFirestore(adminApp);
 
     const patientsQuery = query(collection(firestore, 'patients'), where('clinicianId', '==', clinicianId));
     const scansQuery = query(collection(firestore, 'scans'), where('clinicianId', '==', clinicianId));
@@ -43,8 +46,8 @@ export async function getAllDataForClinician(clinicianId: string): Promise<{ pat
         getDocs(scansQuery),
     ]);
 
-    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Patient));
-    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan));
+    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Patient));
+    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) } as Scan));
 
     return { patients, scans };
 }

@@ -13,9 +13,9 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const formSchema = z.object({
@@ -37,6 +37,8 @@ export default function LoginPage() {
   const auth = useAuth();
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
+  const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
 
   const emailForm = useForm<z.infer<typeof formSchema>>({
@@ -56,15 +58,19 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!auth) return;
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response: any) => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
-    });
+    if (!auth || !recaptchaContainerRef.current) return;
+    
+    if (!recaptchaVerifier.current) {
+        recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+            'size': 'invisible',
+            'callback': (response: any) => {
+                // reCAPTCHA solved, allow signInWithPhoneNumber.
+            }
+        });
+    }
+
     return () => {
-        window.recaptchaVerifier?.clear();
+        recaptchaVerifier.current?.clear();
     }
   }, [auth]);
 
@@ -91,10 +97,10 @@ export default function LoginPage() {
   }
 
   const handleSendVerificationCode = async (data: z.infer<typeof phoneFormSchema>) => {
-    if (!auth) return;
+    if (!auth || !recaptchaVerifier.current) return;
     setIsSubmittingPhone(true);
     try {
-        const verifier = window.recaptchaVerifier;
+        const verifier = recaptchaVerifier.current;
         const result = await signInWithPhoneNumber(auth, data.phoneNumber, verifier);
         setConfirmationResult(result);
         toast({
@@ -136,29 +142,29 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocialLogin = async (provider: 'google') => {
+  const handleSocialLogin = async (providerName: 'google') => {
     if (!auth) return;
-    const authProvider = new GoogleAuthProvider();
+    const provider = providerName === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider();
     try {
-      await signInWithPopup(auth, authProvider);
+      await signInWithPopup(auth, provider);
       toast({
         title: 'Login Successful',
-        description: `Welcome! You've successfully signed in with Google.`,
+        description: `Welcome! You've successfully signed in with ${providerName.charAt(0).toUpperCase() + providerName.slice(1)}.`,
       });
       router.push('/');
     } catch (error: any) {
-      console.error(`${provider} login failed:`, error);
+      console.error(`${providerName} login failed:`, error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: `Could not sign in with Google. Please try again.`,
+        description: `Could not sign in with ${providerName}. Please try again.`,
       });
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <div id="recaptcha-container"></div>
+      <div ref={recaptchaContainerRef}></div>
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
         <div className="w-full max-w-md">

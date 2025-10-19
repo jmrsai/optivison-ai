@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -13,6 +14,7 @@ import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { updatePatient } from '@/lib/patient-service';
 import { Card, CardContent } from '@/components/ui/card';
+import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 
 export default function PatientPage() {
   const params = useParams();
@@ -20,13 +22,17 @@ export default function PatientPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
 
-  const [patientDoc, patientLoading, patientError] = useDocument(
-    id ? doc(firestore, 'patients', id) : undefined
+  const patientRef = useMemoFirebase(
+    () => (id ? doc(firestore, 'patients', id) : undefined),
+    [firestore, id]
   );
-  
-  const [scansCollection, scansLoading, scansError] = useCollection(
-    id ? query(collection(firestore, 'scans'), where('patientId', '==', id), orderBy('date', 'desc')) : undefined
+  const scansQuery = useMemoFirebase(
+    () => (id ? query(collection(firestore, 'scans'), where('patientId', '==', id), orderBy('date', 'desc')) : undefined),
+    [firestore, id]
   );
+
+  const [patientDoc, patientLoading, patientError] = useDocument(patientRef);
+  const [scansCollection, scansLoading, scansError] = useCollection(scansQuery);
   
   const patient = patientDoc?.data() ? { id: patientDoc.id, ...patientDoc.data() } as Patient : null;
   const scans = scansCollection?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan)) || [];
