@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons';
-import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
 import { Menu, Home, UserPlus, Settings, LogIn, LogOut } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useUser, useAuth } from '@/firebase';
@@ -125,6 +125,10 @@ export function AppHeader() {
                     <Logo className="h-7 w-7 text-primary" />
                     <span className="text-lg font-bold text-foreground">OptiVision AI</span>
                   </Link>
+                   <SheetTitle className="sr-only">Menu</SheetTitle>
+                   <SheetDescription className="sr-only">
+                        Main navigation menu for OptiVision AI, providing links to the dashboard, patient registration, and settings.
+                   </SheetDescription>
                 </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium mt-6">
                  {user ? (
