@@ -5,19 +5,22 @@ import { PatientAnalysis } from '@/components/patient-analysis';
 import { PatientHeader } from '@/components/patient-header';
 import { getPatient, getScansByPatient, savePatient } from '@/lib/storage';
 import { Card, CardContent } from '@/components/ui/card';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import type { Patient, Scan } from '@/lib/types';
 
-export default function PatientPage({ params: { id } }: { params: { id: string } }) {
+export default function PatientPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
     async function loadData() {
         const foundPatient = await getPatient(id);
         if (foundPatient) {
