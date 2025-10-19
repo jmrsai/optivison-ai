@@ -26,9 +26,11 @@ export function getFirebaseConfig() {
   return firebaseConfig;
 }
 
-// this object is exported FOR CLIENT-SIDE USE ONLY!
-export const firebaseConfigClient = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+// this function is exported FOR CLIENT-SIDE USE ONLY!
+export function getFirebaseConfigClient() {
+    return {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    };
 };
