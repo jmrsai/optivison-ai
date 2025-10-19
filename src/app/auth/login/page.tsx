@@ -24,7 +24,10 @@ const formSchema = z.object({
 });
 
 const phoneFormSchema = z.object({
-    phoneNumber: z.string().min(10, { message: 'Please enter a valid phone number.' }),
+    phoneNumber: z.string().refine(
+        (value) => /^\+[1-9]\d{1,14}$/.test(value),
+        { message: 'Please enter a valid phone number in E.164 format (e.g., +11234567890).' }
+    ),
     verificationCode: z.string().optional(),
 });
 
@@ -69,6 +72,7 @@ export default function LoginPage() {
   const isCodeSent = !!confirmationResult;
 
   async function onEmailSubmit(values: z.infer<typeof formSchema>) {
+    if (!auth) return;
     try {
         await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
@@ -87,6 +91,7 @@ export default function LoginPage() {
   }
 
   const handleSendVerificationCode = async (data: z.infer<typeof phoneFormSchema>) => {
+    if (!auth) return;
     setIsSubmittingPhone(true);
     try {
         const verifier = window.recaptchaVerifier;
@@ -110,7 +115,7 @@ export default function LoginPage() {
   }
 
   const handleVerifyCode = async (data: z.infer<typeof phoneFormSchema>) => {
-    if (!confirmationResult || !data.verificationCode) return;
+    if (!confirmationResult || !data.verificationCode || !auth) return;
     setIsSubmittingPhone(true);
     try {
         await confirmationResult.confirm(data.verificationCode);
@@ -132,6 +137,7 @@ export default function LoginPage() {
   }
 
   const handleSocialLogin = async (provider: 'google') => {
+    if (!auth) return;
     const authProvider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, authProvider);
@@ -216,7 +222,7 @@ export default function LoginPage() {
                                         <FormItem>
                                         <FormLabel>Phone Number</FormLabel>
                                         <FormControl>
-                                            <Input type="tel" placeholder="+1 123 456 7890" {...field} disabled={isCodeSent} />
+                                            <Input type="tel" placeholder="+11234567890" {...field} disabled={isCodeSent} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -260,9 +266,9 @@ export default function LoginPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4">
-                 <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isSubmittingEmail || isSubmittingPhone}>
+                 <Button className="w-full" variant="outline" onClick={() => handleSocialLogin('google')} disabled={isSubmittingEmail || isSubmittingPhone}>
                   <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 173.4 56.4l-64 64C318.6 98.2 284.7 84 248 84c-9.2 0-17.6.3-26.1.9-106.3 7.6-189.5 97.4-189.5 205.2s83.2 197.6 189.5 205.2c9.2.6 17.6.9 26.1.9 44.9 0 84.1-15.1 113.3-40.2l61.6 61.6c-47.5 42.1-109.8 66.8-177.3 66.8C104.9 512 0 407.1 0 256S104.9 0 248 0c82.4 0 154.9 33.2 206.1 86.8l-37.1 37.1C421.1 114.1 376.4 84 324.9 84c-33.7 0-64.8 10.3-90.1 27.6l64.3 64.3H248v88.9h239.8c.4-9.9.6-19.8.6-29.8z"></path></svg>
-                  Google
+                  Continue with Google
                 </Button>
               </div>
 
@@ -281,3 +287,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
