@@ -17,12 +17,7 @@ const nextConfig = {
       },
     ],
   },
- webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.externals.push('handlebars');
-    }
-    return config;
-  },
+  serverComponentsExternalPackages: ['handlebars'],
 };
 
 module.exports = nextConfig;
