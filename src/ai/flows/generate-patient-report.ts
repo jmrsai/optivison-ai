@@ -33,10 +33,8 @@ Use all the provided information to create a structured report. The output must 
 - Patient's relevant medical history: {{{patientHistory}}}
 
 ---
-**AI ANALYSIS DETAILS**
+**COMPREHENSIVE AI-POWERED OPHTHALMIC ANALYSIS**
 ---
-
-The following sections should be populated using the structured AI analysis data provided in the 'analysis' input field.
 
 **1. DIAGNOSTIC INSIGHTS:**
    - AI Summary: {{{analysis.diagnosticInsights}}}

@@ -8,7 +8,6 @@ import { ScanCard } from '@/components/scan-card';
 import { PlusCircle } from 'lucide-react';
 import { analyzeEyeScan } from '@/ai/flows/ai-driven-diagnostics';
 import { analyzeDocument } from '@/ai/flows/document-analysis';
-import type { DocumentAnalysisOutput } from '@/ai/types';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 import { useToast } from '@/hooks/use-toast';
 import { saveScan } from '@/lib/storage';
@@ -84,25 +83,22 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             documentSummary = docAnalysisResult.summary;
         }
         
-        // Decrypt patient history for the AI
-        const decryptedHistory = await decrypt(patient.history);
-
         const analysisResult = await analyzeEyeScan({
             eyeScanDataUri,
-            patientHistory: decryptedHistory,
+            patientHistory: patient.history,
             clinicalNotes,
             documentSummary,
         });
         
-        const finalScan: Scan = {
+        const scanWithAnalysis: Scan = {
             ...newScanPlaceholder,
             imageUrl: eyeScanDataUri, 
             analysis: analysisResult,
-            report: 'Generating report...',
-            status: 'completed'
+            status: 'completed',
+            report: 'Generating report...'
         };
         
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, analysis: analysisResult, imageUrl: eyeScanDataUri, status: 'completed' } : s)));
+        setScans((prev) => prev.map((s) => (s.id === tempId ? scanWithAnalysis : s)));
 
         const reportResult = await generatePatientReport({
             patientName: patient.name,
@@ -111,10 +107,13 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             scanDate: scanDate,
             clinicalNotes: clinicalNotes,
             analysis: analysisResult,
-            patientHistory: decryptedHistory,
+            patientHistory: patient.history,
         });
 
-        finalScan.report = reportResult.report;
+        const finalScan: Scan = {
+            ...scanWithAnalysis,
+            report: reportResult.report
+        }
         
         await saveScan(finalScan);
         setScans((prev) => prev.map((s) => (s.id === tempId ? finalScan : s)));
@@ -157,10 +156,8 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             return;
         }
 
-        const decryptedHistory = await decrypt(patient.history);
-
         const result = await generateLongitudinalAnalysis({
-            patientHistory: decryptedHistory,
+            patientHistory: patient.history,
             scans: completedScans.map(s => ({
                 date: s.date,
                 diagnosticInsights: s.analysis!.diagnosticInsights,

@@ -3,7 +3,7 @@
 /**
  * @fileOverview AI flow for generating a longitudinal analysis report by comparing multiple scans over time.
  *
- * - generateLongitudinalAnalysis - A function that generates the report.
+ * - generateLongitudinalAnalysis - a function that generates the report.
  */
 
 import {ai} from '@/ai/genkit';

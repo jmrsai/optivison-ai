@@ -5,16 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
-import { AlertCircle, CheckCircle, BrainCircuit, FileText, Loader, Printer } from 'lucide-react';
+import { AlertCircle, CheckCircle, FileText, Loader, Printer } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
 import { useState } from 'react';
 import { PrintableReport } from './printable-report';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
-import { decrypt } from '@/lib/crypto';
 
 type ScanCardProps = {
   scan: Scan;
@@ -45,14 +42,11 @@ const FailedState = () => (
 
 export function ScanCard({ scan, patient }: ScanCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [showFullReport, setShowFullReport] = useState(false);
 
   const handleDownload = async () => {
     if (isDownloading || !scan.analysis || !scan.report) return;
 
     setIsDownloading(true);
-
-    const decryptedHistory = await decrypt(patient.history);
 
     const reportElement = document.createElement('div');
     // Style the new div to be off-screen
@@ -66,7 +60,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     const root = createRoot(reportElement);
     
     // Render the PrintableReport component into the off-screen div
-    root.render(<PrintableReport scan={scan} patient={patient} decryptedHistory={decryptedHistory} />);
+    root.render(<PrintableReport scan={scan} patient={patient} />);
 
     // Allow time for the component to render
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -150,22 +144,10 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
         {scan.status === 'failed' && <FailedState />}
         {scan.status === 'completed' && scan.analysis && (
           <div>
-             <div className='flex justify-between items-center border-b mb-4 pb-4'>
-              <div className="flex items-center space-x-2">
-                <BrainCircuit className="h-5 w-5" />
-                <Label htmlFor={`report-mode-${scan.id}`} className="font-normal cursor-pointer">
-                  {showFullReport ? 'Full Report Text' : 'AI Insights'}
-                </Label>
-                <Switch 
-                  id={`report-mode-${scan.id}`}
-                  checked={showFullReport}
-                  onCheckedChange={setShowFullReport}
-                />
-                <FileText className="h-5 w-5" />
-              </div>
+             <div className='flex justify-end items-center border-b mb-4 pb-4'>
               <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
                   <Printer className="mr-2 h-4 w-4" />
-                  {isDownloading ? 'Downloading...' : 'Download PDF'}
+                  {isDownloading ? 'Downloading...' : 'Download PDF Report'}
               </Button>
              </div>
             <div className="grid md:grid-cols-2 gap-6 items-start mt-4">
@@ -173,31 +155,23 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
                 <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
               </div>
 
-              <div>
-                {!showFullReport ? (
-                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <h4>Diagnostic Insights</h4>
-                      <p>{scan.analysis.diagnosticInsights}</p>
-                      
-                      <h4>Potential Abnormalities</h4>
-                      {scan.analysis.potentialAbnormalities?.length > 0 ? (
-                        <ul>
-                          {scan.analysis.potentialAbnormalities.map((ab, i) => <li key={i}>{ab}</li>)}
-                        </ul>
-                      ) : <p>None identified.</p>}
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <h4>Diagnostic Insights</h4>
+                  <p>{scan.analysis.diagnosticInsights}</p>
+                  
+                  <h4>Potential Abnormalities</h4>
+                  {scan.analysis.potentialAbnormalities?.length > 0 ? (
+                    <ul>
+                      {scan.analysis.potentialAbnormalities.map((ab, i) => <li key={i}>{ab}</li>)}
+                    </ul>
+                  ) : <p>None identified.</p>}
 
-                      <h4>Recommendations</h4>
-                      <p>{scan.analysis.recommendations}</p>
+                  <h4>Recommendations</h4>
+                  <p>{scan.analysis.recommendations}</p>
 
-                      <h4>Confidence</h4>
-                      <p>{(scan.analysis.confidenceLevel * 100).toFixed(0)}%</p>
-                    </div>
-                ) : (
-                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap font-mono text-xs bg-muted p-4 rounded-md h-96 overflow-y-auto">
-                    {scan.report}
-                  </div>
-                )}
-              </div>
+                  <h4>Confidence</h4>
+                  <p>{(scan.analysis.confidenceLevel * 100).toFixed(0)}%</p>
+                </div>
             </div>
           </div>
         )}

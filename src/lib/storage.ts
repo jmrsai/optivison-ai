@@ -8,27 +8,34 @@ const SCANS_KEY = 'optivision_scans';
 // Function to check if running in a browser environment
 const isBrowser = () => typeof window !== 'undefined';
 
-// Initialize data in localStorage if it's not already there
-if (isBrowser()) {
+async function initializeStorage() {
+  if (!isBrowser()) return;
+
   if (!localStorage.getItem(PATIENTS_KEY)) {
-    // Encrypt mock data before storing
-    Promise.all(MOCK_PATIENTS.map(async (p) => ({...p, history: await encrypt(p.history)}))).then(encryptedPatients => {
-        localStorage.setItem(PATIENTS_KEY, JSON.stringify(encryptedPatients));
-    });
+    const encryptedPatients = await Promise.all(
+      MOCK_PATIENTS.map(async (p) => ({ ...p, history: await encrypt(p.history) }))
+    );
+    localStorage.setItem(PATIENTS_KEY, JSON.stringify(encryptedPatients));
   }
+
   if (!localStorage.getItem(SCANS_KEY)) {
-     Promise.all(MOCK_SCANS.map(async (s) => ({...s, clinicalNotes: await encrypt(s.clinicalNotes)}))).then(encryptedScans => {
-        localStorage.setItem(SCANS_KEY, JSON.stringify(encryptedScans));
-    });
+    const encryptedScans = await Promise.all(
+      MOCK_SCANS.map(async (s) => ({ ...s, clinicalNotes: await encrypt(s.clinicalNotes) }))
+    );
+    localStorage.setItem(SCANS_KEY, JSON.stringify(encryptedScans));
   }
 }
+
+initializeStorage();
+
 
 // === Patient Functions ===
 
 export async function getPatients(): Promise<Patient[]> {
   if (!isBrowser()) return MOCK_PATIENTS;
   const patientsJSON = localStorage.getItem(PATIENTS_KEY);
-  const patients = patientsJSON ? JSON.parse(patientsJSON) : [];
+  if (!patientsJSON) return [];
+  const patients = JSON.parse(patientsJSON);
 
   // Decrypt patient history
   return Promise.all(
@@ -66,13 +73,14 @@ export async function savePatient(patient: Patient): Promise<void> {
 export async function getScans(): Promise<Scan[]> {
   if (!isBrowser()) return MOCK_SCANS;
   const scansJSON = localStorage.getItem(SCANS_KEY);
-  const scans = scansJSON ? JSON.parse(scansJSON) : [];
+   if (!scansJSON) return [];
+  const scans = JSON.parse(scansJSON);
   
   // Decrypt clinical notes
   return Promise.all(
       scans.map(async (s: Scan) => ({
           ...s,
-          clinicalNotes: await decrypt(s.clinicalNotes),
+          clinicalNotes: s.clinicalNotes ? await decrypt(s.clinicalNotes) : '',
       }))
   );
 }
