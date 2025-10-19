@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "patient": {
@@ -86,7 +87,7 @@
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": ["password", "google.com", "github.com"]
   },
   "firestore": {
     "/patients/{patientId}": {
@@ -103,3 +104,5 @@
     }
   }
 }
+
+    
