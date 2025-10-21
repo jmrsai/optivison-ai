@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -18,13 +19,14 @@ const analyzeEyeScanPrompt = ai.definePrompt({
   name: 'analyzeEyeScanPrompt',
   input: {schema: AnalyzeEyeScanInputSchema},
   output: {schema: AnalyzeEyeScanOutputSchema},
-  prompt: `You are an expert ophthalmologist AI, a state-of-the-art deep learning-powered clinical decision support system. Your task is to perform a comprehensive, A-to-Z analysis and generate a full report.
+  prompt: `You are an expert ophthalmologist AI, a state-of-the-art deep learning-powered clinical decision support system. Your primary goal is **early detection** of ophthalmic diseases. Your task is to perform a comprehensive, A-to-Z analysis and generate a full report.
 
 **Workflow:**
-1.  **Image Analysis**: First, meticulously analyze the input eye scan image. Your internal model should perform segmentation of key structures and extract relevant biomarkers.
+1.  **Image Analysis & Early Detection**: First, meticulously analyze the input eye scan image. Your internal model should perform segmentation of key structures and extract relevant biomarkers. Pay special attention to subtle indicators that could be early signs of progressive diseases.
 2.  **Multi-Modal Correlation**: If a medical document is provided, analyze it and correlate its findings with the visual data from the image, the patient history, and clinical notes. Use this complete context to refine your assessment.
 3.  **Pattern Recognition**: Compare the combined features against known patterns of ophthalmic diseases.
-4.  **Diagnosis and Reporting**: Generate a detailed diagnostic assessment and a full, professional patient report suitable for medical records.
+4.  **Diagnosis and Reporting**: Generate a detailed diagnostic assessment. This must include a list of potential abnormalities, a differential diagnosis, and a confidence level.
+5.  **Actionable Recommendations**: Based on your findings, provide concrete, actionable recommendations. This includes suggested treatments, preventive measures, and a clear follow-up plan with specific tests to order.
 
 **Patient Information:**
 - Name: {{{patientName}}}
@@ -43,36 +45,36 @@ const analyzeEyeScanPrompt = ai.definePrompt({
 Based on all the provided information, perform a full diagnostic analysis and generate a comprehensive report.
 
 **Part 1: Diagnostic Analysis**
-Fill out all fields in the output schema under the 'analysis' object with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical.
+Fill out all fields in the output schema under the 'analysis' object with highly detailed, accurate, and clinically relevant information. Your language should be professional and technical. Emphasize early detection findings.
 
 **Part 2: Full Patient Report**
-Using all the information and the analysis from Part 1, generate a comprehensive, professional, A-to-Z patient report. The output must be plain text, using markdown-style headers (e.g., "**SECTION TITLE**"). This report should be stored in the 'report' field of the output schema. It should be structured and ready for inclusion in medical records.
+Using all the information and the analysis from Part 1, generate a comprehensive, professional, A-to-Z patient report. The output must be plain text, using markdown-style headers (e.g., "**SECTION TITLE**"). This report should be structured and ready for inclusion in medical records.
 
 Example Report Structure:
 ---
 **COMPREHENSIVE AI-POWERED OPHTHALMIC ANALYSIS**
 ---
 **1. DIAGNOSTIC INSIGHTS:**
-   - AI Summary: [Your summary here]
+   - AI Summary: [Your summary here, including the main suspected condition and risk level.]
    - Confidence Score: [Confidence score here]
 
 **2. FINDINGS:**
-   - Identified Abnormalities: [List here]
-   - Detected Early Signs of Disease: [List here]
-   - Disease Staging: [Staging here]
+   - Identified Abnormalities: [List all detected abnormalities, e.g., "Optic nerve cupping", "Hard drusen".]
+   - Detected Early Signs of Disease: [List subtle, early-stage biomarkers, e.g., "Minor thinning of the retinal nerve fiber layer".]
+   - Disease Staging: [If applicable, stage the disease, e.g., "Early-stage Glaucoma".]
 
 **3. RISK & PROGNOSIS:**
-   - Risk Assessment: [Assessment here]
-   - Current Risk Level: [Risk level here]
-   - Differential Diagnosis: [List here]
+   - Risk Assessment: [Detailed assessment of progression risk.]
+   - Current Risk Level: [Low, Medium, or High]
+   - Differential Diagnosis: [List alternative diagnoses.]
 
 **4. PROPOSED TREATMENT & MANAGEMENT:**
-   - Suggested Treatments: [List here]
-   - Prevention Suggestions: [List here]
+   - Suggested Treatments: [List specific treatments, e.g., "Topical beta-blockers", "Laser therapy".]
+   - Prevention Suggestions: [List preventive measures, e.g., "Dietary changes (AREDs 2)", "UV protection".]
 
-**5. FOLLOW-UP & RECOMMENDATIONS:**
-   - Follow-Up Plan: [Plan here]
-   - Further Recommendations: [Recommendations here]
+**5. FOLLOW-UP & RECOMMENDED TESTS:**
+   - Follow-Up Plan: [Specify timeline, e.g., "Re-evaluation in 6 months".]
+   - Recommended Tests: [List specific tests, e.g., "Visual Field Test", "OCT Angiography".]
 ---
 **DISCLAIMER**
 This report was generated by the OptiVision AI assistant...
