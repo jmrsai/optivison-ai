@@ -12,8 +12,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, getAdditionalUserInfo } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,6 +39,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
@@ -148,7 +150,7 @@ export default function LoginPage() {
   }
 
   const handleSocialLogin = async (providerName: 'google') => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
@@ -156,6 +158,16 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      
+      const additionalUserInfo = getAdditionalUserInfo(result);
+      // Check if it's a new user and create their profile if so
+      if (additionalUserInfo?.isNewUser) {
+        await setDoc(doc(firestore, 'users', user.uid), {
+            displayName: user.displayName,
+            email: user.email,
+            role: 'clinician', // Default role for new social sign-ups
+        });
+      }
 
       toast({
         title: 'Login Successful',
