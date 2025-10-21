@@ -150,9 +150,7 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
-        {userProfile?.role === 'clinician' && <ClinicianDashboard />}
-        {userProfile?.role === 'patient' && <PatientPortal patientUser={user} />}
-        {!userProfile && !profileLoading && <p>Could not determine user role. Please contact support.</p>}
+        <ClinicianDashboard />
       </main>
     </div>
   );
