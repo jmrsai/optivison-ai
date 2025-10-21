@@ -7,6 +7,7 @@ import { google } from 'googleapis';
 import { initializeServerApp } from '@/firebase/server-provider';
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import type { Patient, Scan } from './types';
+import { decrypt } from './crypto';
 
 const drive = google.drive('v3');
 
@@ -16,6 +17,42 @@ async function getAuthenticatedClient(idToken: string) {
     google.options({ auth });
     return auth;
 }
+
+/**
+ * Converts a JSON object of patients and scans to a CSV string.
+ * @param data An object containing patients and scans.
+ * @returns A CSV formatted string.
+ */
+function convertToCsv(data: { patients: Patient[], scans: Scan[] }): string {
+    const { patients, scans } = data;
+    
+    // Create patient CSV
+    const patientHeaders = ['patientId', 'clinicianId', 'name', 'age', 'gender', 'lastVisit', 'riskLevel', 'history'];
+    const patientRows = patients.map(p => 
+        [p.id, p.clinicianId, p.name, p.age, p.gender, p.lastVisit, p.riskLevel, `"${p.history.replace(/"/g, '""')}"`].join(',')
+    );
+    const patientCsv = [patientHeaders.join(','), ...patientRows].join('\n');
+
+    // Create scan CSV
+    const scanHeaders = ['scanId', 'patientId', 'clinicianId', 'date', 'status', 'imageUrl', 'clinicalNotes', 'diagnosticInsights', 'riskLevel'];
+    const scanRows = scans.map(s => 
+        [
+            s.id,
+            s.patientId,
+            s.clinicianId,
+            s.date,
+            s.status,
+            s.imageUrl,
+            `"${s.clinicalNotes?.replace(/"/g, '""') || ''}"`,
+            `"${s.analysis?.diagnosticInsights.replace(/"/g, '""') || ''}"`,
+            s.analysis?.riskLevel || 'N/A'
+        ].join(',')
+    );
+    const scanCsv = [scanHeaders.join(','), ...scanRows].join('\n');
+
+    return `PATIENTS\n${patientCsv}\n\nSCANS\n${scanCsv}`;
+}
+
 
 /**
  * Fetches all patients and their associated scans for a given clinician.
@@ -36,8 +73,23 @@ async function getAllDataForClinician(clinicianId: string): Promise<{ patients: 
         scansQuery.get(),
     ]);
 
-    const patients = patientSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Patient));
-    const scans = scanSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan));
+    const patients = await Promise.all(patientSnap.docs.map(async (doc) => {
+        const patientData = doc.data() as Patient;
+        return {
+            id: doc.id,
+            ...patientData,
+            history: await decrypt(patientData.history),
+        } as Patient;
+    }));
+    
+    const scans = await Promise.all(scanSnap.docs.map(async (doc) => {
+        const scanData = doc.data() as Scan;
+        return {
+            id: doc.id,
+            ...scanData,
+            clinicalNotes: scanData.clinicalNotes ? await decrypt(scanData.clinicalNotes) : '',
+        } as Scan;
+    }));
 
     return { patients, scans };
 }
@@ -51,11 +103,10 @@ export const exportDataToDrive = ai.defineFlow(
     async (idToken, clinicianId) => {
         await getAuthenticatedClient(idToken);
         
-        // 1. Fetch all data for the clinician
         const data = await getAllDataForClinician(clinicianId);
         const jsonData = JSON.stringify(data, null, 2);
+        const csvData = convertToCsv(data);
 
-        // 2. Create a unique folder for the backup
         const folderName = `OptiVision_Backup_${new Date().toISOString().split('T')[0]}`;
         
         const folderMetadata = {
@@ -73,20 +124,29 @@ export const exportDataToDrive = ai.defineFlow(
             throw new Error('Failed to create Google Drive folder.');
         }
 
-        // 3. Upload the JSON file
-        const fileMetadata = {
-            name: 'patient_data_export.json',
-            parents: [folderId],
-        };
-
-        const media = {
-            mimeType: 'application/json',
-            body: jsonData,
-        };
-
+        // Upload JSON file
         await drive.files.create({
-            requestBody: fileMetadata,
-            media: media,
+            requestBody: {
+                name: 'patient_data_export.json',
+                parents: [folderId],
+            },
+            media: {
+                mimeType: 'application/json',
+                body: jsonData,
+            },
+            fields: 'id',
+        });
+
+        // Upload CSV file
+        await drive.files.create({
+            requestBody: {
+                name: 'patient_data_export.csv',
+                parents: [folderId],
+            },
+            media: {
+                mimeType: 'text/csv',
+                body: csvData,
+            },
             fields: 'id',
         });
 

@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, getAdditionalUserInfo } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -131,7 +131,19 @@ export default function LoginPage() {
     if (!confirmationResult || !data.verificationCode || !auth) return;
     setIsSubmittingPhone(true);
     try {
-        await confirmationResult.confirm(data.verificationCode);
+        const userCredential = await confirmationResult.confirm(data.verificationCode);
+        const user = userCredential.user;
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+             await setDoc(doc(firestore, 'users', user.uid), {
+                displayName: user.phoneNumber,
+                email: user.email,
+                role: 'clinician',
+            });
+        }
+
         toast({
             title: "Login Successful",
             description: "You have been successfully logged in.",
@@ -160,12 +172,11 @@ export default function LoginPage() {
       const user = result.user;
       
       const additionalUserInfo = getAdditionalUserInfo(result);
-      // Check if it's a new user and create their profile if so
       if (additionalUserInfo?.isNewUser) {
         await setDoc(doc(firestore, 'users', user.uid), {
             displayName: user.displayName,
             email: user.email,
-            role: 'clinician', // Default role for new social sign-ups
+            role: 'clinician', 
         });
       }
 
@@ -248,43 +259,47 @@ export default function LoginPage() {
                        <Form {...phoneForm}>
                             <form onSubmit={phoneForm.handleSubmit(isCodeSent ? handleVerifyCode : handleSendVerificationCode)} className="space-y-6 pt-6">
                                 <fieldset disabled={isSubmittingPhone}>
-                                    <FormItem>
+                                    <div className="space-y-2">
                                         <FormLabel>Phone Number</FormLabel>
                                         <div className="flex gap-2">
                                             <FormField
                                                 control={phoneForm.control}
                                                 name="countryCode"
                                                 render={({ field }) => (
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isCodeSent}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="w-[120px]">
-                                                                <SelectValue placeholder="Code" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <ScrollArea className="h-64">
-                                                                {countries.map(country => (
-                                                                    <SelectItem key={`${country.code}-${country.dial_code}`} value={country.dial_code}>
-                                                                        {country.code} ({country.dial_code})
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </ScrollArea>
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormItem className="w-[130px]">
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isCodeSent}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Code" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <ScrollArea className="h-64">
+                                                                    {countries.map(country => (
+                                                                        <SelectItem key={`${country.code}-${country.dial_code}`} value={country.dial_code}>
+                                                                            {country.code} ({country.dial_code})
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </ScrollArea>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormItem>
                                                 )}
                                             />
                                             <FormField
                                                 control={phoneForm.control}
                                                 name="phoneNumber"
                                                 render={({ field }) => (
-                                                    <FormControl>
-                                                        <Input type="tel" placeholder="9876543210" {...field} disabled={isCodeSent} />
-                                                    </FormControl>
+                                                    <FormItem className="flex-1">
+                                                        <FormControl>
+                                                            <Input type="tel" placeholder="9876543210" {...field} disabled={isCodeSent} />
+                                                        </FormControl>
+                                                    </FormItem>
                                                 )}
                                             />
                                         </div>
                                          <FormMessage>{phoneForm.formState.errors.countryCode?.message || phoneForm.formState.errors.phoneNumber?.message}</FormMessage>
-                                    </FormItem>
+                                    </div>
                                    {isCodeSent && (
                                      <FormField
                                         control={phoneForm.control}
@@ -302,7 +317,7 @@ export default function LoginPage() {
                                    )}
                                     <div className="flex gap-2">
                                         {isCodeSent && (
-                                            <Button type="button" variant="outline" onClick={resetPhoneAuth} className="w-1/3">
+                                            <Button type="button" variant="outline" onClick={resetPhoneAuth}>
                                                 Change
                                             </Button>
                                         )}
