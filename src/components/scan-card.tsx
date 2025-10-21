@@ -45,11 +45,13 @@ const FailedState = () => (
 
 export function ScanCard({ scan, patient }: ScanCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [decryptedNotes, setDecryptedNotes] = useState('N/A');
+  const [decryptedNotes, setDecryptedNotes] = useState('...');
 
   useEffect(() => {
     if (scan.clinicalNotes) {
       decrypt(scan.clinicalNotes).then(setDecryptedNotes);
+    } else {
+      setDecryptedNotes('N/A');
     }
   }, [scan.clinicalNotes]);
 
@@ -69,6 +71,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     
     root.render(<PrintableReport scan={scan} patient={patient} />);
 
+    // Give React time to render the component
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {

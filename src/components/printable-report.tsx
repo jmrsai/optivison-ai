@@ -28,13 +28,13 @@ const InfoPair = ({ label, value }: { label: string, value: React.ReactNode }) =
 
 
 export function PrintableReport({ scan, patient }: PrintableReportProps) {
-  const [decryptedData, setDecryptedData] = useState({ history: '', notes: '' });
+  const [decryptedData, setDecryptedData] = useState({ history: '...', notes: '...' });
 
   useEffect(() => {
     const decryptData = async () => {
       const [history, notes] = await Promise.all([
         decrypt(patient.history),
-        decrypt(scan.clinicalNotes || ''),
+        scan.clinicalNotes ? decrypt(scan.clinicalNotes) : Promise.resolve('N/A'),
       ]);
       setDecryptedData({ history, notes });
     };
@@ -71,11 +71,11 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
           <InfoPair label="Patient ID" value={patient.id} />
           <div className="col-span-4 mt-2">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Patient Medical History</p>
-             <p className="font-semibold whitespace-pre-wrap">{decryptedData.history || 'N/A'}</p>
+             <p className="font-semibold whitespace-pre-wrap">{decryptedData.history}</p>
           </div>
            <div className="col-span-4 mt-1">
              <p className="text-gray-500 text-[10px] uppercase tracking-wider">Clinical Notes for this Scan</p>
-             <p className="font-semibold whitespace-pre-wrap">{decryptedData.notes || 'N/A'}</p>
+             <p className="font-semibold whitespace-pre-wrap">{decryptedData.notes}</p>
           </div>
         </div>
       </Section>

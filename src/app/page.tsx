@@ -135,7 +135,7 @@ export default function DashboardPage() {
                     <CardDescription>Please log in to access your portal.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <Button onClick={() => router.push('/login')}>
+                     <Button onClick={() => router.push('/auth/login')}>
                         <LogIn className="mr-2 h-4 w-4" />
                         Go to Login
                     </Button>

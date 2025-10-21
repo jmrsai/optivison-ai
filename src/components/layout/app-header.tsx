@@ -35,7 +35,7 @@ export function AppHeader() {
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
        toast({
         variant: 'destructive',
@@ -107,13 +107,13 @@ export function AppHeader() {
           ) : (
              <div className="flex items-center gap-2">
                 <Button asChild variant="outline">
-                    <Link href="/login">
+                    <Link href="/auth/login">
                     <LogIn className="mr-2 h-4 w-4"/>
                     Login
                     </Link>
                 </Button>
                 <Button asChild>
-                    <Link href="/register">
+                    <Link href="/auth/register">
                         <UserPlus className="mr-2 h-4 w-4" />
                         Register
                     </Link>
@@ -161,11 +161,11 @@ export function AppHeader() {
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                    <Link href="/auth/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                       <LogIn className="h-5 w-5" />
                       Login
                     </Link>
-                    <Link href="/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                    <Link href="/auth/register" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                         <UserPlus className="h-5 w-5" />
                         Register
                     </Link>

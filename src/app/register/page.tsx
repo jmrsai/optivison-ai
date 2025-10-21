@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -200,5 +199,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

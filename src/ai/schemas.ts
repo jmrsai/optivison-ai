@@ -143,3 +143,19 @@ export const StrabismusAnalysisOutputSchema = z.object({
   observations: z.string().describe('Detailed observations from the image analysis, such as notes on eye alignment and light reflection.'),
   nextSteps: z.string().describe('Recommended next steps, which should always include consulting a specialist.'),
 });
+
+// Schemas for Document Analysis
+export const DocumentAnalysisInputSchema = z.object({
+  documentDataUri: z
+    .string()
+    .describe(
+      "A medical document as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+
+export const DocumentAnalysisOutputSchema = z.object({
+  summary: z.string().describe("A concise overview of the document's purpose and main points."),
+  diagnoses: z.array(z.string()).describe("A list of all distinct medical diagnoses mentioned in the document."),
+  medications: z.array(z.string()).describe("A list of all medications mentioned, including dosage if available."),
+  recommendations: z.string().describe("A summary of the primary recommendations, follow-up actions, or treatment plans from the document."),
+});

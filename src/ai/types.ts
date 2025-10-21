@@ -8,6 +8,8 @@ import type {
     MedicalChartBotOutputSchema,
     StrabismusAnalysisInputSchema,
     StrabismusAnalysisOutputSchema,
+    DocumentAnalysisInputSchema,
+    DocumentAnalysisOutputSchema,
 } from './schemas';
 
 
@@ -23,4 +25,6 @@ export type MedicalChartBotOutput = z.infer<typeof MedicalChartBotOutputSchema>;
 export type StrabismusAnalysisInput = z.infer<typeof StrabismusAnalysisInputSchema>;
 export type StrabismusAnalysisOutput = z.infer<typeof StrabismusAnalysisOutputSchema>;
 
+export type DocumentAnalysisInput = z.infer<typeof DocumentAnalysisInputSchema>;
+export type DocumentAnalysisOutput = z.infer<typeof DocumentAnalysisOutputSchema>;
     

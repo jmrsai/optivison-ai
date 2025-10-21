@@ -37,7 +37,7 @@ export function PatientList({ patients }: PatientListProps) {
       <div className="text-center py-12">
         <p className="text-muted-foreground">No patients registered yet.</p>
         <Button variant="link" asChild>
-          <Link href="/register">Register the first patient</Link>
+          <Link href="/auth/register">Register the first patient</Link>
         </Button>
       </div>
     );
