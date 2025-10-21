@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -14,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, OAuthCredential } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,7 +28,9 @@ const formSchema = z.object({
 
 const phoneFormSchema = z.object({
     countryCode: z.string().min(1, { message: "Please select a country." }),
-    phoneNumber: z.string().min(5, { message: "Please enter a valid phone number."}),
+    phoneNumber: z.string().refine(value => /^\d{5,15}$/.test(value), {
+        message: "Please enter a valid phone number.",
+    }),
     verificationCode: z.string().optional(),
 });
 
@@ -109,7 +110,7 @@ export default function LoginPage() {
         setConfirmationResult(result);
         toast({
             title: "Verification Code Sent",
-            description: "Please check your phone for the code.",
+            description: `A code has been sent to ${fullPhoneNumber}.`,
         });
     } catch (error) {
         console.error("SMS sending failed:", error);
@@ -154,12 +155,6 @@ export default function LoginPage() {
 
     try {
       const result = await signInWithPopup(auth, provider);
-      
-      // This gives you a Google Access Token. You can use it to access the Google API.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential?.accessToken;
-      
-      // The signed-in user info.
       const user = result.user;
 
       toast({
@@ -176,6 +171,11 @@ export default function LoginPage() {
       });
     }
   };
+
+  const resetPhoneAuth = () => {
+    setConfirmationResult(null);
+    phoneForm.reset();
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -271,7 +271,7 @@ export default function LoginPage() {
                                                 )}
                                             />
                                         </div>
-                                        <FormMessage>{phoneForm.formState.errors.phoneNumber?.message}</FormMessage>
+                                         <FormMessage>{phoneForm.formState.errors.countryCode?.message || phoneForm.formState.errors.phoneNumber?.message}</FormMessage>
                                     </FormItem>
                                    {isCodeSent && (
                                      <FormField
@@ -281,17 +281,24 @@ export default function LoginPage() {
                                             <FormItem>
                                             <FormLabel>Verification Code</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="123456" {...field} />
+                                                <Input autoFocus placeholder="123456" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>
                                         )}
                                         />
                                    )}
-                                    <Button type="submit" className="w-full" disabled={isSubmittingPhone}>
-                                        {isSubmittingPhone ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        {isCodeSent ? 'Verify Code and Sign In' : 'Send Verification Code'}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        {isCodeSent && (
+                                            <Button type="button" variant="outline" onClick={resetPhoneAuth} className="w-1/3">
+                                                Change
+                                            </Button>
+                                        )}
+                                        <Button type="submit" className="w-full" disabled={isSubmittingPhone}>
+                                            {isSubmittingPhone ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            {isCodeSent ? 'Verify & Sign In' : 'Send Code'}
+                                        </Button>
+                                    </div>
                                 </fieldset>
                             </form>
                        </Form>
@@ -320,7 +327,7 @@ export default function LoginPage() {
               <p className="text-center text-sm text-muted-foreground mt-6">
                 Don't have an account?{' '}
                 <Button variant="link" asChild className="p-0">
-                    <Link href="/register">
+                    <Link href="/auth/register">
                     Register here
                     </Link>
                 </Button>

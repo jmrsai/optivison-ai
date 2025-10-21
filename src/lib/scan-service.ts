@@ -28,7 +28,7 @@ export async function addScan(firestore: Firestore, scan: Omit<Scan, 'id'>): Pro
         requestResourceData: scanData,
       });
       errorEmitter.emit('permission-error', permissionError);
-      throw new Error("Failed to add scan due to a database error.");
+      throw serverError;
   }
 }
 
@@ -47,13 +47,15 @@ export async function updateScan(firestore: Firestore, scanId: string, scan: Par
     updateData.clinicalNotes = await encrypt(scan.clinicalNotes);
   }
 
-  updateDoc(scanRef, updateData)
-    .catch((serverError) => {
-       const permissionError = new FirestorePermissionError({
-        path: scanRef.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
+  try {
+    await updateDoc(scanRef, updateData);
+  } catch (serverError) {
+     const permissionError = new FirestorePermissionError({
+      path: scanRef.path,
+      operation: 'update',
+      requestResourceData: updateData,
     });
+    errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
+  }
 }

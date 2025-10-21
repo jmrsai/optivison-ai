@@ -50,13 +50,15 @@ export async function updatePatient(firestore: Firestore, patientId: string, pat
     updateData.history = await encrypt(patient.history);
   }
   
-  updateDoc(patientRef, updateData)
-    .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: patientRef.path,
-            operation: 'update',
-            requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+  try {
+    await updateDoc(patientRef, updateData);
+  } catch (serverError) {
+      const permissionError = new FirestorePermissionError({
+          path: patientRef.path,
+          operation: 'update',
+          requestResourceData: updateData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      throw serverError;
+  };
 }

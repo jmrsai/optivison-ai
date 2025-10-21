@@ -10,25 +10,6 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-// this function is exported FOR SERVER-SIDE USE ONLY!
-export function getFirebaseConfig() {
-  const missing = Object.entries(firebaseConfig)
-    .filter(([, value]) => !value)
-    .map(([key]) => key);
-
-  if (missing.length > 0) {
-    // This is not a security risk, because this code is only executed on the server.
-    // An error is thrown because the app will not work without these values.
-    throw new Error(
-      `The following environment variables are missing: ${missing.join(
-        ', '
-      )}. Please add them to your .env.local file.`
-    );
-  }
-
-  return firebaseConfig;
-}
-
 // this function is exported FOR CLIENT-SIDE USE ONLY!
 export function getFirebaseConfigClient() {
     return firebaseConfig;
