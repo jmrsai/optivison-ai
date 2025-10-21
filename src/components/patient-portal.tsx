@@ -34,6 +34,10 @@ function ScanHistoryItem({ scan }: { scan: ScanType }) {
 export function PatientPortal({ patientUser }: PatientPortalProps) {
   const firestore = useFirestore();
 
+  // Find the patient record linked to this authenticated user.
+  // Note: This assumes a 'userId' field on the patient document. If the link is different, adjust here.
+  // For this implementation, we will assume the patient's UID is the clinicianId for simplicity of demo, 
+  // but in a real app, you'd likely have a patient document linked to the user's UID.
   const scansQuery = useMemoFirebase(
     () => query(collection(firestore, 'scans'), where('clinicianId', '==', patientUser.uid), orderBy('date', 'desc')),
     [firestore, patientUser.uid]
