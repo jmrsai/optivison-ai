@@ -236,7 +236,6 @@ export const countries = [
 	{ "name": "Vanuatu", "dial_code": "+678", "code": "VU" },
 	{ "name": "Venezuela, Bolivarian Republic of Venezuela", "dial_code": "+58", "code": "VE" },
 	{ "name": "Vietnam", "dial_code": "+84", "code": "VN" },
-İ
 	{ "name": "Virgin Islands, British", "dial_code": "+1284", "code": "VG" },
 	{ "name": "Virgin Islands, U.S.", "dial_code": "+1340", "code": "VI" },
 	{ "name": "Wallis and Futuna", "dial_code": "+681", "code": "WF" },
