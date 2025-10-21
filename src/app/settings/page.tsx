@@ -13,17 +13,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, HardDrive, HardDriveUpload, Loader2 } from 'lucide-react';
+import { ArrowLeft, HardDrive, HardDriveUpload, Loader2, LogIn, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { useUser, useAuth } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { exportDataToDrive } from '@/lib/google-drive-service';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const { user, loading: userLoading } = useUser();
@@ -116,6 +118,59 @@ export default function SettingsPage() {
     }
 };
 
+  const handleLogout = async () => {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/auth/login');
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: "Logout Failed",
+        description: "An error occurred while logging out.",
+      });
+    }
+  };
+
+  if (userLoading) {
+    return (
+       <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                <p>Loading Settings...</p>
+            </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!user) {
+     return (
+       <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+            <Card className="max-w-md w-full text-center">
+                <CardHeader>
+                    <CardTitle>Access Denied</CardTitle>
+                    <CardDescription>Please log in to manage your settings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Button onClick={() => router.push('/auth/login')}>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Go to Login
+                    </Button>
+                </CardContent>
+            </Card>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -191,7 +246,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-
           <Card>
             <CardHeader>
               <CardTitle>Preferences</CardTitle>
@@ -228,6 +282,22 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+                <CardTitle>Account Actions</CardTitle>
+                <CardDescription>
+                    Manage your session.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button variant="outline" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                </Button>
+            </CardContent>
+          </Card>
+
         </div>
       </main>
     </div>
