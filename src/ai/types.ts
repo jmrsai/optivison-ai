@@ -2,6 +2,8 @@ import {z} from 'genkit';
 import type { 
     AnalyzeEyeScanInputSchema,
     AnalyzeEyeScanOutputSchema,
+    GeneratePatientReportInputSchema,
+    GeneratePatientReportOutputSchema,
     LongitudinalAnalysisInputSchema,
     LongitudinalAnalysisOutputSchema,
     MedicalChartBotInputSchema,
@@ -15,6 +17,9 @@ import type {
 
 export type AnalyzeEyeScanInput = z.infer<typeof AnalyzeEyeScanInputSchema>;
 export type AnalyzeEyeScanOutput = z.infer<typeof AnalyzeEyeScanOutputSchema>;
+
+export type GeneratePatientReportInput = z.infer<typeof GeneratePatientReportInputSchema>;
+export type GeneratePatientReportOutput = z.infer<typeof GeneratePatientReportOutputSchema>;
 
 export type LongitudinalAnalysisInput = z.infer<typeof LongitudinalAnalysisInputSchema>;
 export type LongitudinalAnalysisOutput = z.infer<typeof LongitudinalAnalysisOutputSchema>;

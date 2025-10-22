@@ -22,6 +22,7 @@ import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { doc } from 'firebase/firestore';
+import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 
 type PatientAnalysisProps = {
   patient: Patient;
@@ -95,9 +96,9 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             documentDataUri = await fileToDataUri(documentFile);
         }
         
-        toast({ title: "AI Analysis In Progress...", description: "The AI is generating a full diagnostic report. This may take a moment." });
+        toast({ title: "AI Analysis In Progress...", description: "The AI is generating a structured diagnostic analysis. This may take a moment." });
         
-        const result = await analyzeEyeScan({
+        const analysisResult = await analyzeEyeScan({
             patientName: patient.name,
             patientAge: patient.age,
             patientGender: patient.gender,
@@ -108,25 +109,45 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             documentDataUri,
         });
         
-        const finalScanUpdate: Partial<Scan> = {
-            imageUrl: eyeScanDataUri,
-            analysis: result.analysis,
-            report: result.report,
+        const analysisUpdate: Partial<Scan> = {
+            imageUrl: eyeScanDataUri, // Store the permanent data URI
+            analysis: analysisResult,
             status: 'completed',
         };
         
-        await updateScan(firestore, scanId, finalScanUpdate);
-        
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...finalScanUpdate, id: scanId! } : s)));
+        await updateScan(firestore, scanId, analysisUpdate);
 
-        if (result.analysis.riskLevel && result.analysis.riskLevel !== 'N/A') {
-            const updatedPatient = { riskLevel: result.analysis.riskLevel, lastVisit: scanDate };
+        // Update UI with analysis, but report is still pending
+        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...analysisUpdate, id: scanId! } : s)));
+        
+        toast({ title: "Analysis Complete, Generating Report...", description: "The AI is now generating the full patient report." });
+
+        const reportResult = await generatePatientReport({
+            patientName: patient.name,
+            patientAge: patient.age,
+            patientGender: patient.gender,
+            patientHistory: patient.history,
+            scanDate,
+            clinicalNotes,
+            analysis: analysisResult,
+        });
+
+        const reportUpdate: Partial<Scan> = {
+            report: reportResult.report,
+        };
+
+        await updateScan(firestore, scanId, reportUpdate);
+
+        setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, ...reportUpdate } : s)));
+        
+        if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
+            const updatedPatient = { riskLevel: analysisResult.riskLevel, lastVisit: scanDate };
             onPatientUpdate(updatedPatient);
         }
 
         toast({
-            title: "Analysis Complete",
-            description: "AI analysis and full report have been generated.",
+            title: "Report Generation Complete",
+            description: "AI analysis and full report have been successfully generated and saved.",
         });
 
     } catch (error) {

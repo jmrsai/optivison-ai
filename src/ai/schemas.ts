@@ -63,10 +63,23 @@ export const AnalyzeEyeScanInputSchema = z.object({
     ),
 });
 
-export const AnalyzeEyeScanOutputSchema = z.object({
-  analysis: AnalysisSchema.describe("The structured diagnostic analysis object."),
-  report: z.string().describe('The comprehensive patient report in a structured, professional format, using markdown for section headers.'),
+export const AnalyzeEyeScanOutputSchema = AnalysisSchema.describe("The structured diagnostic analysis object.");
+
+
+export const GeneratePatientReportInputSchema = z.object({
+    patientName: z.string(),
+    patientAge: z.number(),
+    patientGender: z.string(),
+    patientHistory: z.string(),
+    scanDate: z.string(),
+    clinicalNotes: z.string().optional(),
+    analysis: AnalysisSchema,
 });
+
+export const GeneratePatientReportOutputSchema = z.object({
+    report: z.string().describe('The comprehensive patient report in a structured, professional format, using markdown for section headers.'),
+});
+
 
 const ScanSummarySchema = z.object({
   date: z.string().describe('The date of the scan.'),

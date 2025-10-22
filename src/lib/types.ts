@@ -24,9 +24,7 @@ export type Patient = {
   role?: 'patient';
 };
 
-// We only need the 'analysis' part of the schema for the scan type
-const ScanAnalysisSchema = AnalyzeEyeScanOutputSchema.shape.analysis;
-type ScanAnalysis = z.infer<typeof ScanAnalysisSchema>;
+export type ScanAnalysis = z.infer<typeof AnalyzeEyeScanOutputSchema>;
 
 
 export type Scan = {
