@@ -1,4 +1,3 @@
-
 import { addDoc, collection, doc, updateDoc, type Firestore } from "firebase/firestore";
 import type { Patient } from "./types";
 import { encrypt } from "./crypto";

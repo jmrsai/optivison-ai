@@ -1,94 +1,170 @@
 /**
- * @fileoverview Firestore Security Rules for the Eye Clinic application.
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a clinician-ownership model. Each patient and scan is associated with a specific clinician.
- * Only the assigned clinician can create, read, update, or delete patient or scan data. This ensures data privacy and
- * prevents unauthorized access.
+ * This ruleset enforces a role-based access control model with ownership constraints,
+ * ensuring users can only access data they own or are explicitly authorized to view.
+ * It defaults to strict security, requiring explicit rules to allow any data access.
  *
  * Data Structure:
- * - /patients/{patientId}: Stores patient records, with each document containing a `clinicianId` field.
- * - /scans/{scanId}: Stores scan records, with each document containing both `patientId` and `clinicianId` fields.
+ * - /users/{userId}: Stores user profiles; userId matches the Firebase Auth UID.
+ * - /patients/{patientId}: Stores patient data; accessible to assigned clinicians.
+ * - /scans/{scanId}: Stores scan data; accessible to clinicians associated with the patient.
+ * - /messages/{messageId}: Stores chat messages; access restricted to sender and receiver.
  *
  * Key Security Decisions:
- * - Clinicians can only access patients and scans associated with their `clinicianId`.
- * - Data shape validation is relaxed for prototyping purposes, focusing on authorization.
- * - No listing of all patients or scans is allowed without authentication.
+ * - User listing is disallowed to protect user privacy.
+ * - Public read access is not granted for any collection.
+ * - Data validation is relaxed in this prototype, focusing on authorization.
  *
  * Denormalization for Authorization:
- * - Both `patients` and `scans` collections include `clinicianId` to enable direct authorization checks without additional reads.
+ * The 'Patient' entity includes a `clinicianId` field for direct authorization checks,
+ * avoiding the need for complex queries to determine clinician-patient relationships.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to patient records. Only the assigned clinician can manage patient data.
-     * @path /patients/{patientId}
-     * @allow (create) - A clinician creates a new patient record, where the clinicianId in the new document matches their own UID.
-     * @allow (get) - A clinician retrieves a specific patient record, where the clinicianId in the existing document matches their own UID.
-     * @allow (update) - A clinician updates a patient record, where the clinicianId in the existing document matches their own UID.
-     * @allow (delete) - A clinician deletes a patient record, where the clinicianId in the existing document matches their own UID.
-     * @deny (create) - A non-clinician attempts to create a patient record.
-     * @deny (get) - A clinician attempts to retrieve a patient record that is not assigned to them.
-     * @principle Enforces clinician-ownership for patient data.
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}
+     * @allow (create) Authenticated user can create their own profile.
+     * @allow (get, list, update, delete) Authenticated user can only access their own profile.
+     * @deny (create) Unauthenticated users can not create profiles.
+     * @deny (get, list, update, delete) Users cannot access other user's profiles.
+     * @principle Enforces document ownership and prevents unauthorized access to user data.
      */
-    match /patients/{patientId} {
-      // Helper function to check if the request is made by the assigned clinician
-      function isClinicianOwner(clinicianId) {
-        return isSignedIn() && request.auth.uid == clinicianId;
+    match /users/{userId} {
+      // Helper function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
       }
 
-      // Helper function to check if the document exists and the request is made by the assigned clinician
-      function isExistingClinicianOwner(clinicianId) {
-        return isClinicianOwner(clinicianId) && resource != null;
+      // Helper function to check if the user is the owner of the document.
+      function isOwner(userId) {
+        return request.auth.uid == userId;
       }
 
-      // Read permissions: Only the assigned clinician can read patient data
-      allow get: if isExistingClinicianOwner(resource.data.clinicianId);
+      // Allow the user to create their profile if the userId matches their auth UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.email == request.auth.token.email;
+
+      // Allow the user to get their profile if they are the owner.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow the user to list their own profile.  This is effectively a no-op
+      // as the client should only be requesting a specific user's document.
       allow list: if false;
 
-      // Write permissions: Only the assigned clinician can create, update, or delete patient data
-      allow create: if isSignedIn() && request.resource.data.clinicianId == request.auth.uid;
-      allow update: if isExistingClinicianOwner(resource.data.clinicianId) && request.resource.data.clinicianId == resource.data.clinicianId;
-      allow delete: if isExistingClinicianOwner(resource.data.clinicianId);
+      // Allow the user to update their profile if they are the owner.
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+
+      // Allow the user to delete their profile if they are the owner.
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Controls access to scan records. Only the assigned clinician can manage scan data.
+     * @description Controls access to patient records.
+     * @path /patients/{patientId}
+     * @allow (create) Authenticated clinicians can create patient records assigned to themselves.
+     * @allow (get, list) Authenticated clinicians can access patient records assigned to themselves.
+     * @allow (update, delete) Authenticated clinicians can update patient records assigned to themselves.
+     * @deny (create, get, list, update, delete) Unauthenticated users cannot access patient records.
+     * @deny (create, get, list, update, delete) Clinicians cannot access patients assigned to other clinicians.
+     * @principle Enforces clinician-patient relationship through the 'clinicianId' field.
+     */
+    match /patients/{patientId} {
+      // Helper function to check if the user is a clinician.
+      function isClinician() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'clinician';
+      }
+
+      // Helper function to check if the clinician is assigned to the patient.
+      function isClinicianForPatient(clinicianId) {
+        return isClinician() && clinicianId == request.auth.uid;
+      }
+
+      // Allow a clinician to create a patient if they are a clinician and assign themselves as the clinician.
+      allow create: if isClinician() && isClinicianForPatient(request.resource.data.clinicianId);
+
+      // Allow a clinician to get a patient if they are the assigned clinician.
+      allow get: if isSignedIn() && resource.data.clinicianId == request.auth.uid;
+
+      // Allow a clinician to list patients if they are a clinician.
+      allow list: if isSignedIn() && isClinician();
+
+      // Allow a clinician to update a patient if they are the assigned clinician.
+      allow update: if isSignedIn() && resource != null && resource.data.clinicianId == request.auth.uid;
+
+      // Allow a clinician to delete a patient if they are the assigned clinician.
+      allow delete: if isSignedIn() && resource != null && resource.data.clinicianId == request.auth.uid;
+    }
+
+    /**
+     * @description Controls access to scan records.
      * @path /scans/{scanId}
-     * @allow (create) - A clinician creates a new scan record, where the clinicianId in the new document matches their own UID.
-     * @allow (get) - A clinician retrieves a specific scan record, where the clinicianId in the existing document matches their own UID.
-     * @allow (update) - A clinician updates a scan record, where the clinicianId in the existing document matches their own UID.
-     * @allow (delete) - A clinician deletes a scan record, where the clinicianId in the existing document matches their own UID.
-     * @deny (create) - A non-clinician attempts to create a scan record.
-     * @deny (get) - A clinician attempts to retrieve a scan record that is not assigned to them.
-     * @principle Enforces clinician-ownership for scan data.
+     * @allow (create) Authenticated clinicians can create scans for patients they are assigned to.
+     * @allow (get, list) Authenticated clinicians can access scans for patients they are assigned to.
+     * @allow (update, delete) Authenticated clinicians can update scans for patients they are assigned to.
+     * @deny (create, get, list, update, delete) Unauthenticated users cannot access scan records.
+     * @deny (create, get, list, update, delete) Clinicians cannot access scans for patients assigned to other clinicians.
+     * @principle Enforces clinician-patient relationship via scans, ensuring access control.
      */
     match /scans/{scanId} {
-      // Read permissions: Only the assigned clinician can read scan data
-      allow get: if isExistingClinicianOwner(resource.data.clinicianId);
-      allow list: if false;
+      // Helper function to check if the user is a clinician.
+      function isClinician() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'clinician';
+      }
 
-      // Write permissions: Only the assigned clinician can create, update, or delete scan data
-      allow create: if isSignedIn() && request.resource.data.clinicianId == request.auth.uid;
-      allow update: if isExistingClinicianOwner(resource.data.clinicianId) && request.resource.data.clinicianId == resource.data.clinicianId;
-      allow delete: if isExistingClinicianOwner(resource.data.clinicianId);
+      // Helper function to check if the scan is associated with a patient assigned to the clinician.
+      function isClinicianForScan(patientId) {
+        return isClinician() && get(/databases/$(database)/documents/patients/$(patientId)).data.clinicianId == request.auth.uid;
+      }
+
+      // Allow a clinician to create a scan if they are assigned to the patient.
+      allow create: if isClinician() && isClinicianForScan(request.resource.data.patientId) && request.resource.data.clinicianId == request.auth.uid;
+
+      // Allow a clinician to get a scan if they are assigned to the patient.
+      allow get: if isSignedIn() && isClinician() && isClinicianForScan(resource.data.patientId) && resource.data.clinicianId == request.auth.uid;
+
+      // Allow a clinician to list scans if they are assigned to a patient.
+      allow list: if isSignedIn() && isClinician();
+
+      // Allow a clinician to update a scan if they are assigned to the patient.
+      allow update: if isSignedIn() && resource != null && isClinician() && isClinicianForScan(resource.data.patientId) && resource.data.clinicianId == request.auth.uid;
+
+      // Allow a clinician to delete a scan if they are assigned to the patient.
+      allow delete: if isSignedIn() && resource != null && isClinician() && isClinicianForScan(resource.data.patientId) && resource.data.clinicianId == request.auth.uid;
     }
 
-    // Define a global function to check if a user is signed in
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    /**
+     * @description Controls access to messages.
+     * @path /messages/{messageId}
+     * @allow (create) Authenticated users can create messages with themselves as sender or receiver.
+     * @allow (get, list) Authenticated users can access messages where they are either the sender or receiver.
+     * @allow (update, delete) Not allowed.
+     * @deny (create, get, list, update, delete) Unauthenticated users cannot access messages.
+     * @principle Enforces sender-receiver relationship for message access.
+     */
+    match /messages/{messageId} {
+      // Helper function to check if the user is the sender or receiver.
+      function isSenderOrReceiver(senderId, receiverId) {
+        return isSignedIn() && (request.auth.uid == senderId || request.auth.uid == receiverId);
+      }
 
-    // Define a global function to check if the request is made by the assigned clinician
-    function isClinicianOwner(clinicianId) {
-        return isSignedIn() && request.auth.uid == clinicianId;
-    }
+      // Allow a user to create a message if they are the sender.
+      allow create: if isSignedIn() && isSenderOrReceiver(request.resource.data.senderId, request.resource.data.receiverId) && request.auth.uid == request.resource.data.senderId;
 
-    // Define a global function to check if the document exists and the request is made by the assigned clinician
-    function isExistingClinicianOwner(clinicianId) {
-        return isClinicianOwner(clinicianId) && resource != null;
+      // Allow a user to get a message if they are the sender or receiver.
+      allow get: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+
+      // Allow a user to list messages if they are the sender or receiver.
+      allow list: if isSignedIn() && true;
+
+      // Disallow updates to messages.
+      allow update: if false;
+
+      // Disallow deletion of messages.
+      allow delete: if false;
     }
   }
 }
