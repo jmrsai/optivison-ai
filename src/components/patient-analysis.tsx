@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Patient, Scan } from '@/lib/types';
+import type { Patient, Scan, UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { NewAnalysisSheet } from '@/components/new-analysis-sheet';
 import { ScanCard } from '@/components/scan-card';
@@ -21,6 +20,8 @@ import { format } from 'date-fns';
 import { fileToDataUri } from '@/lib/utils';
 import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { doc } from 'firebase/firestore';
 
 type PatientAnalysisProps = {
   patient: Patient;
@@ -44,6 +45,11 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
   const firestore = useFirestore();
   const { user } = useUser();
+  const [profile] = useDocumentData(
+    user ? doc(firestore, 'users', user.uid) : undefined
+  );
+  const userProfile = profile as UserProfile | undefined;
+
 
   useEffect(() => {
     setScans(initialScans);
@@ -128,7 +134,13 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         if (scanId) {
             const failedScanUpdate = { status: 'failed' as const };
             await updateScan(firestore, scanId, failedScanUpdate);
+            // Update UI for the failed scan
+             setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, status: 'failed', id: scanId! } : s)));
+        } else {
+            // Remove the placeholder if adding the doc failed
+            setScans((prev) => prev.filter(s => s.id !== tempId));
         }
+
         toast({
             variant: "destructive",
             title: "Analysis Failed",
@@ -176,7 +188,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
 
   return (
     <div className="space-y-8">
-      {scans.filter(s => s.status === 'completed').length > 1 && (
+      {scans.filter(s => s.status === 'completed').length > 1 && userProfile?.role === 'clinician' && (
         <Card>
           <CardHeader>
             <CardTitle>Longitudinal Progression Analysis</CardTitle>
@@ -249,10 +261,12 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
       <div>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Scan History & Reports</h2>
-            <Button onClick={() => setSheetOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Analysis
-            </Button>
+             {userProfile?.role === 'clinician' && (
+                <Button onClick={() => setSheetOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Analysis
+                </Button>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -263,7 +277,9 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
                 <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium text-foreground">No Scans Found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">This patient does not have any scans yet.</p>
-                <Button className="mt-4" variant="default" onClick={() => setSheetOpen(true)}>Start the First Analysis</Button>
+                {userProfile?.role === 'clinician' && (
+                    <Button className="mt-4" variant="default" onClick={() => setSheetOpen(true)}>Start the First Analysis</Button>
+                )}
               </div>
             )}
           </div>

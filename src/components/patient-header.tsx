@@ -27,12 +27,17 @@ const getRiskBadgeClass = (riskLevel: Patient['riskLevel']) => {
   };
 
 export function PatientHeader({ patient }: PatientHeaderProps) {
-  const [formattedDate, setFormattedDate] = useState('');
+  const [formattedDate, setFormattedDate] = useState('...');
   const [decryptedHistory, setDecryptedHistory] = useState('Loading history...');
 
   useEffect(() => {
-    if (patient.lastVisit) {
-      setFormattedDate(format(new Date(patient.lastVisit), 'PPP'));
+    try {
+      if (patient.lastVisit) {
+        setFormattedDate(format(new Date(patient.lastVisit), 'PPP'));
+      }
+    } catch (e) {
+      console.error("Failed to format date", e);
+      setFormattedDate('Invalid Date');
     }
   }, [patient.lastVisit]);
 
@@ -64,7 +69,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
                 </div>
                 <div>
                     <p className="font-medium text-muted-foreground">Last Visit</p>
-                    <p className="font-semibold text-base">{formattedDate || '...'}</p>
+                    <p className="font-semibold text-base">{formattedDate}</p>
                 </div>
                 <div>
                     <p className="font-medium text-muted-foreground">Current Risk</p>

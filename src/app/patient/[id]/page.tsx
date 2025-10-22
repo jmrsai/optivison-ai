@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -8,10 +7,10 @@ import { notFound, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Loader } from 'lucide-react';
-import type { Patient, Scan } from '@/lib/types';
+import type { Patient, Scan, UserProfile } from '@/lib/types';
 import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
-import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
+import { useDocument, useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { updatePatient } from '@/lib/patient-service';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +22,12 @@ export default function PatientPage() {
   const id = params.id as string;
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
+
+  const [profile] = useDocumentData(
+    user ? doc(firestore, 'users', user.uid) : undefined
+  );
+  const userProfile = profile as UserProfile | undefined;
+
 
   const patientRef = useMemoFirebase(
     () => (id ? doc(firestore, 'patients', id) : undefined),
@@ -60,21 +65,39 @@ export default function PatientPage() {
     );
   }
 
-  // Security check: ensure the logged-in user is the clinician for this patient
-  if (patient && user && patient.clinicianId !== user.uid) {
-    return (
-      <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
-          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
-          <p className="text-muted-foreground">You do not have permission to view this patient's records.</p>
-           <Button asChild variant="link" className="mt-4">
-              <Link href="/">Back to Dashboard</Link>
-           </Button>
-        </main>
-      </div>
-    )
+  // Security check: If the user is a clinician, ensure they are the assigned one.
+  // If the user is a patient, ensure they are viewing their own record.
+  if (user && patient) {
+    if (userProfile?.role === 'clinician' && patient.clinicianId !== user.uid) {
+       return (
+        <div className="flex flex-col min-h-screen bg-background">
+          <AppHeader />
+          <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
+            <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+            <p className="text-muted-foreground">You do not have permission to view this patient's records.</p>
+            <Button asChild variant="link" className="mt-4">
+                <Link href="/">Back to Dashboard</Link>
+            </Button>
+          </main>
+        </div>
+      )
+    }
+    if (userProfile?.role === 'patient' && patient.userId !== user.uid) {
+        return (
+        <div className="flex flex-col min-h-screen bg-background">
+          <AppHeader />
+          <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
+            <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+            <p className="text-muted-foreground">You can only view your own patient record.</p>
+            <Button asChild variant="link" className="mt-4">
+                <Link href="/">Back to Portal</Link>
+            </Button>
+          </main>
+        </div>
+      )
+    }
   }
+
 
   if (!patient) {
     notFound();
@@ -94,10 +117,10 @@ export default function PatientPage() {
         </div>
         <div className="space-y-8">
           <PatientHeader patient={patient} />
-           {completedScans.length > 0 && (
+           {completedScans.length > 0 && userProfile?.role === 'clinician' && (
              <MedicalChartBot patient={patient} scans={completedScans} />
            )}
-          <Card className="shadow-sm">
+          <Card className="shadow-sm" id={`scan-${scans[0]?.id}`}>
             <CardContent className="p-6">
               <PatientAnalysis patient={patient} initialScans={scans} onPatientUpdate={handlePatientUpdate} />
             </CardContent>
