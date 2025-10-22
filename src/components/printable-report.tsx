@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Patient, Scan } from '@/lib/types';
