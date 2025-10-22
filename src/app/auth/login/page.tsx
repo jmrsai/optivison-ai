@@ -66,17 +66,27 @@ export default function LoginPage() {
   useEffect(() => {
     if (!auth || !recaptchaContainerRef.current) return;
     
+    // Ensure verifier is not created multiple times
     if (!recaptchaVerifier.current) {
-        recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
             'size': 'invisible',
             'callback': (response: any) => {
                 // reCAPTCHA solved, allow signInWithPhoneNumber.
             }
         });
+        recaptchaVerifier.current = verifier;
+        // Render the reCAPTCHA explicitly to get a widget ID
+        verifier.render().catch(err => {
+          console.error("reCAPTCHA render error", err);
+        });
     }
 
     return () => {
-        recaptchaVerifier.current?.clear();
+        // Cleanup on unmount
+        if (recaptchaVerifier.current) {
+            recaptchaVerifier.current.clear();
+            recaptchaVerifier.current = null;
+        }
     }
   }, [auth]);
 
@@ -134,9 +144,11 @@ export default function LoginPage() {
         const userCredential = await confirmationResult.confirm(data.verificationCode);
         const user = userCredential.user;
         
-        const additionalUserInfo = getAdditionalUserInfo(userCredential);
-        if (additionalUserInfo?.isNewUser) {
-             await setDoc(doc(firestore, 'users', user.uid), {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+             await setDoc(userDocRef, {
                 displayName: user.phoneNumber,
                 email: user.email,
                 role: 'clinician',
@@ -364,4 +376,5 @@ export default function LoginPage() {
       </main>
     </div>
   );
-}
+
+    
