@@ -21,6 +21,7 @@ export type Patient = {
   avatarUrl: string;
   riskLevel: 'Low' | 'Medium' | 'High' | 'N/A';
   history: string;
+  role?: 'patient';
 };
 
 // We only need the 'analysis' part of the schema for the scan type

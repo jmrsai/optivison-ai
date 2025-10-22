@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, getAdditionalUserInfo } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -128,15 +128,14 @@ export default function LoginPage() {
   }
 
   const handleVerifyCode = async (data: z.infer<typeof phoneFormSchema>) => {
-    if (!confirmationResult || !data.verificationCode || !auth) return;
+    if (!confirmationResult || !data.verificationCode || !auth || !firestore) return;
     setIsSubmittingPhone(true);
     try {
         const userCredential = await confirmationResult.confirm(data.verificationCode);
         const user = userCredential.user;
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
+        
+        const additionalUserInfo = getAdditionalUserInfo(userCredential);
+        if (additionalUserInfo?.isNewUser) {
              await setDoc(doc(firestore, 'users', user.uid), {
                 displayName: user.phoneNumber,
                 email: user.email,
