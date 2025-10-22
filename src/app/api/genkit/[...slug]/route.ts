@@ -3,7 +3,6 @@
  */
 import { nextHandler } from '@genkit-ai/next';
 import '@/ai/flows';
-import '@/lib/google-drive-service'
 
 export const GET = nextHandler();
 export const POST = nextHandler();

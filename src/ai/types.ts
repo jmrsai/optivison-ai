@@ -27,4 +27,3 @@ export type StrabismusAnalysisOutput = z.infer<typeof StrabismusAnalysisOutputSc
 
 export type DocumentAnalysisInput = z.infer<typeof DocumentAnalysisInputSchema>;
 export type DocumentAnalysisOutput = z.infer<typeof DocumentAnalysisOutputSchema>;
-    

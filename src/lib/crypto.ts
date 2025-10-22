@@ -4,10 +4,19 @@
 // WARNING: This is a simplified cryptographic implementation for demonstration purposes.
 // A production-grade E2EE system requires robust, audited key management and handling.
 
+import { webcrypto } from 'crypto';
+
 const isBrowser = () => typeof window !== 'undefined';
 
 let secretKey: CryptoKey | null = null;
 const KEY_STORAGE_NAME = 'optivision_crypto_key';
+
+const cryptoProvider = () => {
+    if (isBrowser()) {
+        return window.crypto;
+    }
+    return webcrypto;
+}
 
 /**
  * Gets the secret key from storage or generates a new one.
@@ -17,30 +26,35 @@ async function getKey(): Promise<CryptoKey> {
     return secretKey;
   }
 
-  if (!isBrowser() || !window.crypto?.subtle) {
+  const crypto = cryptoProvider();
+
+  if (!crypto?.subtle) {
     throw new Error('Web Crypto API is not available in this environment.');
   }
 
-  let storedKey = localStorage.getItem(KEY_STORAGE_NAME);
+  if (isBrowser()) {
+    let storedKey = localStorage.getItem(KEY_STORAGE_NAME);
 
-  if (storedKey) {
-    try {
-      const jwk = JSON.parse(storedKey);
-      secretKey = await window.crypto.subtle.importKey(
-        'jwk',
-        jwk,
-        { name: 'AES-GCM' },
-        true,
-        ['encrypt', 'decrypt']
-      );
-      return secretKey;
-    } catch (e) {
-      console.error('Failed to import stored key, generating a new one.', e);
+    if (storedKey) {
+        try {
+        const jwk = JSON.parse(storedKey);
+        secretKey = await crypto.subtle.importKey(
+            'jwk',
+            jwk,
+            { name: 'AES-GCM' },
+            true,
+            ['encrypt', 'decrypt']
+        );
+        return secretKey;
+        } catch (e) {
+        console.error('Failed to import stored key, generating a new one.', e);
+        }
     }
   }
 
+
   // Generate a new key if one doesn't exist
-  const newKey = await window.crypto.subtle.generateKey(
+  const newKey = await crypto.subtle.generateKey(
     {
       name: 'AES-GCM',
       length: 256,
@@ -49,9 +63,12 @@ async function getKey(): Promise<CryptoKey> {
     ['encrypt', 'decrypt']
   );
 
-  // Export and store the new key
-  const jwk = await window.crypto.subtle.exportKey('jwk', newKey);
-  localStorage.setItem(KEY_STORAGE_NAME, JSON.stringify(jwk));
+  if (isBrowser()) {
+    // Export and store the new key
+    const jwk = await crypto.subtle.exportKey('jwk', newKey);
+    localStorage.setItem(KEY_STORAGE_NAME, JSON.stringify(jwk));
+  }
+  
   secretKey = newKey;
   return secretKey;
 }
@@ -62,13 +79,15 @@ async function getKey(): Promise<CryptoKey> {
  * @returns A string containing the IV and the ciphertext, separated by a dot.
  */
 export async function encrypt(plaintext: string): Promise<string> {
-  if (!isBrowser() || !plaintext) return plaintext; 
+  if (!plaintext) return plaintext; 
+  const crypto = cryptoProvider();
+
   try {
     const key = await getKey();
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
     const encoded = new TextEncoder().encode(plaintext);
 
-    const ciphertext = await window.crypto.subtle.encrypt(
+    const ciphertext = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
         iv: iv,
@@ -95,10 +114,12 @@ export async function encrypt(plaintext: string): Promise<string> {
  * @returns The decrypted plaintext.
  */
 export async function decrypt(encryptedString: string): Promise<string> {
-   if (!isBrowser() || !encryptedString || !encryptedString.includes('.')) {
+   if (!encryptedString || !encryptedString.includes('.')) {
     return encryptedString;
   }
   
+  const crypto = cryptoProvider();
+
   try {
     const key = await getKey();
     const parts = encryptedString.split('.');
@@ -113,7 +134,7 @@ export async function decrypt(encryptedString: string): Promise<string> {
     const iv = new Uint8Array(ivString.split('').map(c => c.charCodeAt(0)));
     const ciphertext = new Uint8Array(ciphertextString.split('').map(c => c.charCodeAt(0)));
 
-    const decrypted = await window.crypto.subtle.decrypt(
+    const decrypted = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
         iv: iv,
