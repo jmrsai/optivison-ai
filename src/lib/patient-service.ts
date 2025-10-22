@@ -2,7 +2,7 @@ import { addDoc, collection, doc, updateDoc, type Firestore } from "firebase/fir
 import type { Patient } from "./types";
 import { encrypt } from "./crypto";
 import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 
 /**
  * Adds a new patient to the Firestore database, encrypting sensitive fields.
@@ -23,20 +23,19 @@ export async function addPatient(firestore: Firestore, patient: Omit<Patient, 'i
   if (patient.role === 'patient' && patient.userId) {
     patientData.userId = patient.userId;
   }
+  
+  const docRef = await addDoc(collection(firestore, "patients"), patientData as any)
+    .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: `/patients`,
+            operation: 'create',
+            requestResourceData: patientData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Re-throw to allow the caller to handle it.
+    });
 
-  try {
-    const docRef = await addDoc(collection(firestore, "patients"), patientData as any);
-    return docRef.id;
-  } catch (serverError: any) {
-     const permissionError = new FirestorePermissionError({
-        path: `/patients`,
-        operation: 'create',
-        requestResourceData: patientData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      // Re-throw the original error to be caught by the calling function's catch block
-      throw serverError;
-  }
+  return docRef.id;
 }
 
 /**
@@ -54,15 +53,14 @@ export async function updatePatient(firestore: Firestore, patientId: string, pat
     updateData.history = await encrypt(patient.history);
   }
   
-  try {
-    await updateDoc(patientRef, updateData);
-  } catch (serverError) {
-      const permissionError = new FirestorePermissionError({
-          path: patientRef.path,
-          operation: 'update',
-          requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      throw serverError;
-  };
+  updateDoc(patientRef, updateData)
+    .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: patientRef.path,
+            operation: 'update',
+            requestResourceData: updateData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    });
 }

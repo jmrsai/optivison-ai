@@ -1,7 +1,7 @@
 import { addDoc, collection, doc, updateDoc, type Firestore } from "firebase/firestore";
 import type { Scan } from "./types";
 import { encrypt } from "./crypto";
-import { FirestorePermissionError } from "@/firebase/errors";
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 import { errorEmitter } from "@/firebase/error-emitter";
 
 /**
@@ -17,18 +17,17 @@ export async function addScan(firestore: Firestore, scan: Omit<Scan, 'id'>): Pro
     scanData.clinicalNotes = await encrypt(scan.clinicalNotes);
   }
 
-  try {
-    const docRef = await addDoc(collection(firestore, "scans"), scanData);
-    return docRef.id;
-  } catch (serverError) {
-     const permissionError = new FirestorePermissionError({
-        path: `/scans`,
-        operation: 'create',
-        requestResourceData: scanData,
-      });
+  const docRef = await addDoc(collection(firestore, "scans"), scanData)
+    .catch((serverError) => {
+      const permissionError = new FirestorePermissionError({
+          path: `/scans`,
+          operation: 'create',
+          requestResourceData: scanData,
+      } satisfies SecurityRuleContext);
       errorEmitter.emit('permission-error', permissionError);
       throw serverError;
-  }
+    });
+  return docRef.id;
 }
 
 /**
@@ -46,15 +45,14 @@ export async function updateScan(firestore: Firestore, scanId: string, scan: Par
     updateData.clinicalNotes = await encrypt(scan.clinicalNotes);
   }
 
-  try {
-    await updateDoc(scanRef, updateData);
-  } catch (serverError) {
-     const permissionError = new FirestorePermissionError({
-      path: scanRef.path,
-      operation: 'update',
-      requestResourceData: updateData,
+  updateDoc(scanRef, updateData)
+    .catch((serverError) => {
+      const permissionError = new FirestorePermissionError({
+        path: scanRef.path,
+        operation: 'update',
+        requestResourceData: updateData,
+      } satisfies SecurityRuleContext);
+      errorEmitter.emit('permission-error', permissionError);
+      throw serverError;
     });
-    errorEmitter.emit('permission-error', permissionError);
-    throw serverError;
-  }
 }
