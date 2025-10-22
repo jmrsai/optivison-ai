@@ -6,7 +6,7 @@ import { PatientHeader } from '@/components/patient-header';
 import { notFound, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, VenetianMask } from 'lucide-react';
 import type { Patient, Scan, UserProfile } from '@/lib/types';
 import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';

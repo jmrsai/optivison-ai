@@ -66,29 +66,29 @@ export default function LoginPage() {
   useEffect(() => {
     if (!auth || !recaptchaContainerRef.current) return;
     
-    // Ensure verifier is not created multiple times
     if (!recaptchaVerifier.current) {
-        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+        recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
             'size': 'invisible',
             'callback': (response: any) => {
-                // reCAPTCHA solved, allow signInWithPhoneNumber.
+                // reCAPTCHA solved.
             }
         });
-        recaptchaVerifier.current = verifier;
-        // Render the reCAPTCHA explicitly to get a widget ID
-        verifier.render().catch(err => {
+        recaptchaVerifier.current.render().catch(err => {
           console.error("reCAPTCHA render error", err);
+          toast({
+            variant: "destructive",
+            title: "reCAPTCHA Error",
+            description: "Could not initialize reCAPTCHA. Please refresh the page.",
+          });
         });
     }
 
     return () => {
-        // Cleanup on unmount
         if (recaptchaVerifier.current) {
             recaptchaVerifier.current.clear();
-            recaptchaVerifier.current = null;
         }
     }
-  }, [auth]);
+  }, [auth, toast]);
 
   const isSubmittingEmail = emailForm.formState.isSubmitting;
   const isCodeSent = !!confirmationResult;

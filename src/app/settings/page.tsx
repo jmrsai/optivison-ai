@@ -21,7 +21,7 @@ import { useAuth } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { exportDataToDrive } from '@/lib/google-drive-service';
+import { exportDataToDrive } from '@/ai/flows/google-drive-export';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
@@ -101,8 +101,8 @@ export default function SettingsPage() {
     toast({ title: 'Starting Backup...', description: 'Preparing your data for export. This may take a moment.' });
 
     try {
-        const idToken = await user.getIdToken();
-        const result = await exportDataToDrive(idToken, user.uid);
+        const idToken = await googleDriveUser.getIdToken(true); // Force refresh the token
+        const result = await exportDataToDrive({ idToken, clinicianId: user.uid });
         toast({
             title: 'Backup Successful',
             description: `Your data has been saved to a new folder in your Google Drive named '${result.folderName}'.`,

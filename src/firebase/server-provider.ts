@@ -24,9 +24,17 @@ function getFirebaseAdminCredential() {
   }
 
   try {
-    const serviceAccountJson = JSON.parse(serviceAccount);
+    // Handle both raw JSON and Base64-encoded JSON
+    const decodedServiceAccount = Buffer.from(serviceAccount, 'base64').toString('utf8');
+    const serviceAccountJson = JSON.parse(decodedServiceAccount);
     return credential.cert(serviceAccountJson);
   } catch (e) {
-    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.');
+     try {
+       // If Base64 decoding fails, try to parse as raw JSON
+       const serviceAccountJson = JSON.parse(serviceAccount);
+       return credential.cert(serviceAccountJson);
+     } catch (e2) {
+        throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string or a Base64-encoded JSON string.');
+     }
   }
 }
