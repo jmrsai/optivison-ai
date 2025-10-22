@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle, LogIn, Loader2 } from 'lucide-react';
 import type { Patient, UserProfile } from '@/lib/types';
-import { useUser, useFirestore } from '@/firebase';
+import { useFirestore, useAuth } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -103,6 +104,7 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const auth = useAuth();
 
   const [profile, profileLoading, profileError] = useDocumentData(
     user ? doc(firestore, 'users', user.uid) : undefined

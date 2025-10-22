@@ -17,7 +17,8 @@ import { ArrowLeft, HardDrive, HardDriveUpload, Loader2, LogIn, LogOut } from 'l
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
-import { useUser, useAuth } from '@/firebase';
+import { useAuth } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { exportDataToDrive } from '@/lib/google-drive-service';

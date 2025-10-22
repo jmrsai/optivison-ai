@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useUser, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import type { User } from 'firebase/auth';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useCollection, useQuery } from 'react-firebase-hooks/firestore';

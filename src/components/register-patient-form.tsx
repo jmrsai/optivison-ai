@@ -13,7 +13,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useToast } from "@/hooks/use-toast";
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useUser, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { addPatient } from '@/lib/patient-service';
 
 const formSchema = z.object({

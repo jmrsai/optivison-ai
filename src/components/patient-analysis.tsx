@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +19,8 @@ import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { fileToDataUri } from '@/lib/utils';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 
 type PatientAnalysisProps = {
   patient: Patient;
