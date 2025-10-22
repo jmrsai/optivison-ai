@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
-  serverComponentsExternalPackages: ['handlebars'],
   typescript: {
     ignoreBuildErrors: true,
   },
