@@ -13,6 +13,7 @@ export type UserProfile = {
 export type Patient = {
   id: string;
   clinicianId: string;
+  userId?: string; // Link to the auth user if the patient has an account
   name: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';

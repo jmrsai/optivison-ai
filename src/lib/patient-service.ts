@@ -15,13 +15,18 @@ export async function addPatient(firestore: Firestore, patient: Omit<Patient, 'i
   // Encrypt sensitive fields before saving
   const encryptedHistory = await encrypt(patient.history);
 
-  const patientData = {
+  const patientData: Omit<Patient, 'id'> = {
     ...patient,
     history: encryptedHistory,
   };
 
+  // If the patient is registering themselves, link their auth UID
+  if (patient.role === 'patient' && patient.userId) {
+    patientData.userId = patient.userId;
+  }
+
   try {
-    const docRef = await addDoc(collection(firestore, "patients"), patientData);
+    const docRef = await addDoc(collection(firestore, "patients"), patientData as any);
     return docRef.id;
   } catch (serverError: any) {
      const permissionError = new FirestorePermissionError({

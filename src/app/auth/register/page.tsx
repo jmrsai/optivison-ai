@@ -17,6 +17,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { addPatient } from '@/lib/patient-service';
 
 
 const formSchema = z.object({
@@ -60,6 +61,23 @@ export default function RegisterPage() {
         email: values.email,
         role: values.role,
       });
+
+      // If user is a patient, create a corresponding patient document
+      if (values.role === 'patient') {
+        await addPatient(firestore, {
+          userId: user.uid, // Link patient doc to auth user
+          clinicianId: 'unassigned', // Or some default value
+          name: values.name,
+          age: 0, // Placeholder, can be updated in their portal
+          gender: 'Other', // Placeholder
+          lastVisit: new Date().toISOString().split('T')[0],
+          avatarUrl: `https://picsum.photos/seed/${user.uid}/100/100`,
+          riskLevel: 'N/A',
+          history: 'No medical history provided yet.',
+          role: 'patient',
+        });
+      }
+
 
       toast({
         title: "Registration Successful",

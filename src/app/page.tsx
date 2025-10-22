@@ -104,7 +104,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [profile, profileLoading] = useDocumentData(
+  const [profile, profileLoading, profileError] = useDocumentData(
     user ? doc(firestore, 'users', user.uid) : undefined
   );
 
@@ -145,12 +145,34 @@ export default function DashboardPage() {
       </div>
     )
   }
+  
+  if (profileError || (!profileLoading && !userProfile)) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+            <Card className="max-w-md w-full text-center">
+                <CardHeader>
+                    <CardTitle className="text-destructive">Error</CardTitle>
+                    <CardDescription>Could not determine user role. Please contact support.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Button variant="outline" onClick={() => auth.signOut().then(() => router.push('/auth/login'))}>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Logout and Try Again
+                    </Button>
+                </CardContent>
+            </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
-        <ClinicianDashboard />
+        {userProfile?.role === 'clinician' ? <ClinicianDashboard /> : <PatientPortal patientUser={user} />}
       </main>
     </div>
   );
