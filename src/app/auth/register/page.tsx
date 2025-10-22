@@ -18,6 +18,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { addPatient } from '@/lib/patient-service';
+import { ClientLayout } from '@/components/layout/client-layout';
 
 
 const formSchema = z.object({
@@ -27,7 +28,7 @@ const formSchema = z.object({
   role: z.enum(['clinician', 'patient'], { required_error: 'You must select a role.' }),
 });
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
@@ -98,123 +99,128 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader />
-      <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle>Create an Account</CardTitle>
-              <CardDescription>Register to start using OptiVision AI.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                   <fieldset disabled={isSubmitting}>
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Dr. Jane Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="jane.doe@clinic.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem className="space-y-3">
-                            <FormLabel>Register as a...</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="flex space-x-4"
-                              >
-                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <RadioGroupItem value="clinician" />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    Clinician
-                                  </FormLabel>
-                                </FormItem>
-                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <RadioGroupItem value="patient" />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    Patient
-                                  </FormLabel>
-                                </FormItem>
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className="w-full" disabled={isSubmitting}>
-                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Create Account
-                      </Button>
-                   </fieldset>
-                </form>
-              </Form>
-              
-               <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or
-                  </span>
-                </div>
+    <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+      <div className="w-full max-w-md">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Create an Account</CardTitle>
+            <CardDescription>Register to start using OptiVision AI.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                 <fieldset disabled={isSubmitting}>
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Dr. Jane Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="jane.doe@clinic.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>Register as a...</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex space-x-4"
+                            >
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="clinician" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Clinician
+                                </FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="patient" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Patient
+                                </FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Create Account
+                    </Button>
+                 </fieldset>
+              </form>
+            </Form>
+            
+             <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
               </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or
+                </span>
+              </div>
+            </div>
 
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Button variant="link" asChild className="p-0">
-                    <Link href="/auth/login">
-                    Log in here
-                    </Link>
-                </Button>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Button variant="link" asChild className="p-0">
+                  <Link href="/auth/login">
+                  Log in here
+                  </Link>
+              </Button>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
+}
+
+export default function RegisterPage() {
+    return (
+        <ClientLayout>
+            <RegisterContent />
+        </ClientLayout>
+    )
 }

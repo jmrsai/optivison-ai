@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -16,8 +17,9 @@ import { updatePatient } from '@/lib/patient-service';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 import { MedicalChartBot } from '@/components/medical-chart-bot';
+import { ClientLayout } from '@/components/layout/client-layout';
 
-export default function PatientPage() {
+function PatientPageContent() {
   const params = useParams();
   const id = params.id as string;
   const { user, loading: userLoading } = useUser();
@@ -53,15 +55,12 @@ export default function PatientPage() {
   
   if (patientLoading || userLoading || scansLoading) {
     return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
         <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
                 <Loader className="h-6 w-6 animate-spin" />
                 <p className="text-muted-foreground">Loading Patient Data...</p>
             </div>
         </main>
-      </div>
     );
   }
 
@@ -70,8 +69,6 @@ export default function PatientPage() {
   if (user && patient) {
     if (userProfile?.role === 'clinician' && patient.clinicianId !== user.uid) {
        return (
-        <div className="flex flex-col min-h-screen bg-background">
-          <AppHeader />
           <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
             <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
             <p className="text-muted-foreground">You do not have permission to view this patient's records.</p>
@@ -79,13 +76,10 @@ export default function PatientPage() {
                 <Link href="/">Back to Dashboard</Link>
             </Button>
           </main>
-        </div>
       )
     }
     if (userProfile?.role === 'patient' && patient.userId !== user.uid) {
         return (
-        <div className="flex flex-col min-h-screen bg-background">
-          <AppHeader />
           <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
             <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
             <p className="text-muted-foreground">You can only view your own patient record.</p>
@@ -93,7 +87,6 @@ export default function PatientPage() {
                 <Link href="/">Back to Portal</Link>
             </Button>
           </main>
-        </div>
       )
     }
   }
@@ -104,8 +97,6 @@ export default function PatientPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <div className="mb-6">
           <Button asChild variant="ghost">
@@ -127,6 +118,14 @@ export default function PatientPage() {
           </Card>
         </div>
       </main>
-    </div>
   );
+}
+
+
+export default function PatientPage() {
+    return (
+        <ClientLayout>
+            <PatientPageContent />
+        </ClientLayout>
+    )
 }

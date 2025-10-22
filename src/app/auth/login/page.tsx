@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { countries } from '@/lib/countries';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ClientLayout } from '@/components/layout/client-layout';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -35,7 +36,7 @@ const phoneFormSchema = z.object({
     verificationCode: z.string().optional(),
 });
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
@@ -212,9 +213,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <>
       <div ref={recaptchaContainerRef}></div>
-      <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
         <div className="w-full max-w-md">
           <Card className="shadow-sm">
@@ -374,6 +374,14 @@ export default function LoginPage() {
           </Card>
         </div>
       </main>
-    </div>
+    </>
   );
+}
+
+export default function LoginPage() {
+    return (
+        <ClientLayout>
+            <LoginContent />
+        </ClientLayout>
+    )
 }

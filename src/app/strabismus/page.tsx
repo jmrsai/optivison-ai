@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -12,10 +13,11 @@ import { analyzeStrabismus } from '@/ai/flows/strabismus-analysis';
 import type { StrabismusAnalysisOutput } from '@/ai/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
+import { ClientLayout } from '@/components/layout/client-layout';
 
 type AnalysisMode = 'camera' | 'upload';
 
-export default function StrabismusPage() {
+function StrabismusContent() {
   const [mode, setMode] = useState<AnalysisMode | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [analysisResult, setAnalysisResult] = useState<StrabismusAnalysisOutput | null>(null);
@@ -121,8 +123,6 @@ export default function StrabismusPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
@@ -231,6 +231,13 @@ export default function StrabismusPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
+}
+
+export default function StrabismusPage() {
+    return (
+        <ClientLayout>
+            <StrabismusContent />
+        </ClientLayout>
+    )
 }

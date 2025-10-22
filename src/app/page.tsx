@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { RegisterPatientForm } from '@/components/register-patient-form';
 import { PatientPortal } from '@/components/patient-portal';
+import { ClientLayout } from '@/components/layout/client-layout';
 
 
 function StatCard({ title, value, icon: Icon, loading }: { title: string; value: string | number; icon: React.ElementType, loading?: boolean }) {
@@ -100,7 +101,7 @@ function ClinicianDashboard() {
 }
 
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -114,23 +115,18 @@ export default function DashboardPage() {
   
   if (userLoading || (user && profileLoading)) {
     return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+        <div className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                 <p>Loading Your Portal...</p>
             </div>
-        </main>
-      </div>
+        </div>
     )
   }
 
   if (!user) {
     return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+        <div className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <Card className="max-w-md w-full text-center">
                 <CardHeader>
                     <CardTitle>Welcome to OptiVision AI</CardTitle>
@@ -143,16 +139,13 @@ export default function DashboardPage() {
                     </Button>
                 </CardContent>
             </Card>
-        </main>
-      </div>
+        </div>
     )
   }
   
   if (profileError || (!profileLoading && !userProfile)) {
     return (
-      <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
+      <div className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <Card className="max-w-md w-full text-center">
                 <CardHeader>
                     <CardTitle className="text-destructive">Error</CardTitle>
@@ -165,17 +158,21 @@ export default function DashboardPage() {
                     </Button>
                 </CardContent>
             </Card>
-        </main>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
         {userProfile?.role === 'clinician' ? <ClinicianDashboard /> : <PatientPortal patientUser={user} />}
       </main>
-    </div>
   );
+}
+
+export default function DashboardPage() {
+    return (
+        <ClientLayout>
+            <DashboardContent />
+        </ClientLayout>
+    )
 }

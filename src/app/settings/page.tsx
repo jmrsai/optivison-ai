@@ -23,8 +23,9 @@ import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User, 
 import { useToast } from '@/hooks/use-toast';
 import { exportDataToDrive } from '@/ai/flows/google-drive-export';
 import { useRouter } from 'next/navigation';
+import { ClientLayout } from '@/components/layout/client-layout';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -139,22 +140,17 @@ export default function SettingsPage() {
 
   if (userLoading) {
     return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
         <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                 <p>Loading Settings...</p>
             </div>
         </main>
-      </div>
     )
   }
 
   if (!user) {
      return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
         <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <Card className="max-w-md w-full text-center">
                 <CardHeader>
@@ -169,13 +165,10 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
         </main>
-      </div>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <div className="mb-6">
           <Button asChild variant="ghost">
@@ -301,6 +294,13 @@ export default function SettingsPage() {
 
         </div>
       </main>
-    </div>
   );
+}
+
+export default function SettingsPage() {
+    return (
+        <ClientLayout>
+            <SettingsContent />
+        </ClientLayout>
+    )
 }
