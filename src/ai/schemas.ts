@@ -126,11 +126,18 @@ const ScanAnalysisForBotSchema = z.object({
     }),
 });
 
+const ChatMessageSchema = z.object({
+    role: z.enum(['user', 'model']),
+    content: z.string(),
+});
+
+
 export const MedicalChartBotInputSchema = z.object({
   patient: PatientSchema,
   latestScan: ScanAnalysisForBotSchema,
   historicalScans: z.array(ScanAnalysisForBotSchema.extend({ date: z.string() })),
   query: z.string().describe("The clinician's question about the patient's chart."),
+  history: z.array(ChatMessageSchema).optional().describe("The conversation history."),
 });
 
 export const MedicalChartBotOutputSchema = z.object({

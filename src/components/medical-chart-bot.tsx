@@ -1,46 +1,48 @@
-
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bot, Loader2, Send, User } from 'lucide-react';
 import type { Patient, Scan } from '@/lib/types';
+import type { ChatMessage } from '@/ai/types';
 import { useToast } from '@/hooks/use-toast';
-import { chatWithMedicalChart } from '@/ai/flows/medical-chart-bot';
+import { medicalChartBotStream } from '@/ai/flows/medical-chart-bot';
+import { runFlow } from '@genkit-ai/next/client';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { decrypt } from '@/lib/crypto';
+import { Sparkles } from 'lucide-react';
 
 type MedicalChartBotProps = {
   patient: Patient;
   scans: Scan[];
 };
 
-type Message = {
-  role: 'user' | 'bot';
-  content: string;
-};
 
 export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [decryptedHistory, setDecryptedHistory] = useState<string | null>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTo({
             top: scrollAreaRef.current.scrollHeight,
             behavior: 'smooth'
         });
     }
-  }, [messages]);
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
   
   useEffect(() => {
     decrypt(patient.history).then(setDecryptedHistory);
@@ -50,22 +52,26 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
     e.preventDefault();
     if (!query.trim() || isLoading || decryptedHistory === null) return;
 
-    const userMessage: Message = { role: 'user', content: query };
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessage: ChatMessage = { role: 'user', content: query };
+    const newMessages: ChatMessage[] = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
     setQuery('');
+
+    // Add a placeholder for the bot's response
+    setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
     try {
         const latestScan = scans[0];
         const historicalScans = scans.slice(1);
         
-        const result = await chatWithMedicalChart({
+        const stream = await runFlow(medicalChartBotStream, {
             patient: {
                 id: patient.id,
                 name: patient.name,
                 age: patient.age,
                 gender: patient.gender,
-                history: decryptedHistory, // Use decrypted history
+                history: decryptedHistory,
             },
             latestScan: {
                 analysis: latestScan.analysis!,
@@ -75,10 +81,19 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
                 analysis: s.analysis!,
             })),
             query,
+            history: newMessages, // Send the conversation history
         });
 
-        const botMessage: Message = { role: 'bot', content: result.response };
-        setMessages((prev) => [...prev, botMessage]);
+        for await (const chunk of stream) {
+            setMessages(prev => {
+                const updatedMessages = [...prev];
+                const lastMessage = updatedMessages[updatedMessages.length - 1];
+                if (lastMessage.role === 'model') {
+                    lastMessage.content += chunk;
+                }
+                return updatedMessages;
+            });
+        }
 
     } catch (error) {
         console.error("Chart bot error:", error);
@@ -87,8 +102,8 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
             title: 'Error',
             description: 'Could not get a response from the AI assistant.',
         });
-        // Remove the user's message if the bot fails to respond
-        setMessages(prev => prev.slice(0, -1));
+        // Remove the user's message and the bot placeholder if it fails
+        setMessages(prev => prev.slice(0, -2));
     } finally {
         setIsLoading(false);
     }
@@ -97,7 +112,10 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>AI Chart Assistant</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI Chart Assistant
+        </CardTitle>
         <CardDescription>
           Ask questions about {patient.name}'s chart, including their history and scan results.
         </CardDescription>
@@ -114,13 +132,22 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
                 ) : (
                     messages.map((message, index) => (
                         <div key={index} className={cn("flex items-start gap-3", message.role === 'user' ? 'justify-end' : '')}>
-                            {message.role === 'bot' && (
-                                <Avatar className="h-8 w-8">
+                            {message.role === 'model' && (
+                                <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
                                     <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
                                 </Avatar>
                             )}
-                            <div className={cn("p-3 rounded-lg max-w-sm lg:max-w-md", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                               <p className="whitespace-pre-wrap">{message.content}</p>
+                            <div className={cn("p-3 rounded-lg max-w-sm lg:max-w-md", 
+                                message.role === 'user' ? 'bg-muted' : 'bg-primary/10',
+                                message.role === 'model' && message.content === '' && 'p-0' // Hide empty bot message before streaming starts
+                                )}>
+                               {message.content ? (
+                                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                               ) : (
+                                <div className="flex items-center gap-2 p-3">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                </div>
+                               )}
                             </div>
                             {message.role === 'user' && (
                                <Avatar className="h-8 w-8">
@@ -129,16 +156,6 @@ export function MedicalChartBot({ patient, scans }: MedicalChartBotProps) {
                             )}
                         </div>
                     ))
-                )}
-                 {isLoading && (
-                    <div className="flex items-start gap-3">
-                         <Avatar className="h-8 w-8">
-                            <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
-                        </Avatar>
-                        <div className="p-3 rounded-lg bg-muted">
-                           <Skeleton className="h-4 w-12" />
-                        </div>
-                    </div>
                 )}
                 </div>
             </ScrollArea>
