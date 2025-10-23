@@ -1,3 +1,4 @@
+
 // src/firebase/index.ts
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -40,3 +41,4 @@ export function initializeAuth(): {
 }
 
 export * from './auth/provider';
+export * from './auth/use-user';

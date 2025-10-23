@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle, LogIn, Loader2 } from 'lucide-react';
 import type { Patient, UserProfile, Scan } from '@/lib/types';
-import { useAuth } from '@/firebase/auth/use-auth';
+import { useAuth } from '@/firebase/auth/provider';
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';

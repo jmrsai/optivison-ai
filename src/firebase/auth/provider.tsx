@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -5,6 +6,7 @@ import {
   useState,
   useEffect,
   type PropsWithChildren,
+  useContext,
 } from 'react';
 import { initializeAuth } from '..';
 import type { FirebaseApp } from 'firebase/app';
@@ -84,4 +86,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 }
 
-export { AuthContext };
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+
+  return context.auth;
+}
+
+export function useFirebaseApp() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error('useFirebaseApp must be used within an AuthProvider');
+  }
+
+  return context.firebaseApp;
+}

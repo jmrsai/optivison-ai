@@ -1,13 +1,14 @@
+
 import type { Patient } from "./types";
 import { encrypt } from "./crypto";
 
-const getPatientsFromStorage = (): Record<string, Patient> => {
+const getPatientsFromStorage = (): Record<string, Omit<Patient, 'id'>> => {
   if (typeof window === 'undefined') return {};
   const data = localStorage.getItem('patients');
   return data ? JSON.parse(data) : {};
 };
 
-const savePatientsToStorage = (patients: Record<string, Patient>) => {
+const savePatientsToStorage = (patients: Record<string, Omit<Patient, 'id'>>) => {
   if (typeof window === 'undefined') return;
   localStorage.setItem('patients', JSON.stringify(patients));
 };
@@ -20,19 +21,14 @@ const savePatientsToStorage = (patients: Record<string, Patient>) => {
 export async function addPatient(patient: Omit<Patient, 'id'>): Promise<string> {
   const encryptedHistory = await encrypt(patient.history);
 
-  const patientId = `patient_${Date.now()}`;
-  const newPatient: Patient = {
+  const patientId = patient.userId || `patient_${Date.now()}`;
+  const newPatientData: Omit<Patient, 'id'> = {
     ...patient,
-    id: patientId,
     history: encryptedHistory,
   };
-
-  if (patient.role === 'patient' && patient.userId) {
-    newPatient.userId = patient.userId;
-  }
   
   const patients = getPatientsFromStorage();
-  patients[patientId] = newPatient;
+  patients[patientId] = newPatientData;
   savePatientsToStorage(patients);
   
   return patientId;

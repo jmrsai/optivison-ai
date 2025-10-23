@@ -18,14 +18,23 @@ type PatientPortalProps = {
 function getPatientPortalData(userId: string): { patient: Patient | null, scans: ScanType[] } {
     if (typeof window === 'undefined') return { patient: null, scans: [] };
 
-    const allPatients = JSON.parse(localStorage.getItem('patients') || '{}');
-    const allScans = JSON.parse(localStorage.getItem('scans') || '{}');
+    const allPatientsData = localStorage.getItem('patients');
+    if (!allPatientsData) return { patient: null, scans: [] };
+    const allPatients = JSON.parse(allPatientsData);
+    
+    // Find the patient document that has a matching userId
+    const patientEntry = Object.entries(allPatients).find(([id, p]: [string, any]) => p.userId === userId);
 
-    const patient = Object.values(allPatients).find((p: any) => p.userId === userId) as Patient | null;
-
-    if (!patient) {
+    if (!patientEntry) {
         return { patient: null, scans: [] };
     }
+
+    const [patientId, patientData] = patientEntry;
+    const patient = { ...(patientData as Patient), id: patientId };
+
+    const allScansData = localStorage.getItem('scans');
+    if (!allScansData) return { patient, scans: [] };
+    const allScans = JSON.parse(allScansData);
 
     const scans = Object.values(allScans)
         .filter((s: any) => s.patientId === patient.id)

@@ -55,22 +55,22 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
         return;
     }
     
-    const newPatient: Omit<Patient, 'id'> = {
-      ...values,
-      clinicianId: user.uid,
-      lastVisit: new Date().toISOString().split('T')[0],
-      avatarUrl: placeholderImages[`patient${(Math.floor(Math.random() * 4) + 1)}` as keyof typeof placeholderImages].src,
-      riskLevel: 'N/A',
-    };
-
     try {
-      const patientId = await addPatient(newPatient);
+      const patientId = await addPatient({
+        ...values,
+        clinicianId: user.uid,
+        lastVisit: new Date().toISOString().split('T')[0],
+        avatarUrl: placeholderImages[`patient${(Math.floor(Math.random() * 4) + 1)}` as keyof typeof placeholderImages].src,
+        riskLevel: 'N/A',
+      });
+
       toast({
           title: "Patient Registered",
-          description: `${newPatient.name} has been successfully registered.`,
+          description: `${values.name} has been successfully registered.`,
       });
       form.reset();
       onPatientRegistered(patientId);
+
     } catch (error) {
        toast({
           variant: "destructive",

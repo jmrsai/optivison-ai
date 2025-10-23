@@ -16,7 +16,7 @@ import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
 import { Menu, Home, Settings, LogIn, LogOut, UserPlus, Search } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useAuth } from '@/firebase/auth/use-auth';
+import { useAuth } from '@/firebase/auth/provider';
 import { useUser } from '@/firebase/auth/use-user';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
