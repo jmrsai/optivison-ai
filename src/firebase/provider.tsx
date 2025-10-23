@@ -1,3 +1,4 @@
+
 'use client';
 import {
   createContext,
@@ -26,15 +27,21 @@ const FirebaseContext = createContext<FirebaseContextValue | undefined>(undefine
 export function FirebaseProvider({ children }: PropsWithChildren) {
   const [instances, setInstances] = useState<FirebaseContextValue | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string>('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const { firebaseApp, firestore, auth } = initializeFirebase();
+        const { firebaseApp, firestore, auth, config } = initializeFirebase();
         setInstances({ firebaseApp, firestore, auth });
+        setProjectId(config.projectId);
       } catch (e: any) {
          if (e.message.includes("firestore is not available")) {
             setError("Firestore is not enabled for this Firebase project.");
+            try {
+              const { config } = initializeFirebase();
+              setProjectId(config.projectId);
+            } catch {}
          } else {
             setError("Failed to initialize Firebase. Please check your configuration.");
          }
@@ -59,12 +66,12 @@ export function FirebaseProvider({ children }: PropsWithChildren) {
                     <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
                     <h1 className="mt-4 text-2xl font-bold">Action Required: Enable Firestore</h1>
                     <p className="mt-2 text-base">
-                        The application failed to connect to the database. The Firestore service is not enabled in your Firebase project (<strong className="font-semibold">{process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A'}</strong>).
+                        The application failed to connect to the database. The Firestore service is not enabled in your Firebase project (<strong className="font-semibold">{projectId || 'N/A'}</strong>).
                     </p>
                     <p className="mt-4 text-left text-sm">Please follow these steps to resolve the issue:</p>
                     <ol className="mt-2 text-left text-sm list-decimal list-inside space-y-2">
                         <li>Go to the <span className="font-semibold">Firebase Console</span>.</li>
-                        <li>Select your project: <span className="font-semibold">{process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A'}</span>.</li>
+                        <li>Select your project: <span className="font-semibold">{projectId || 'N/A'}</span>.</li>
                         <li>In the left-hand menu, under "Build", click <span className="font-semibold">Firestore Database</span>.</li>
                         <li>Click the <span className="font-semibold">"Create database"</span> button.</li>
                         <li>Choose to start in <span className="font-semibold">"Production mode"</span>.</li>
@@ -73,7 +80,7 @@ export function FirebaseProvider({ children }: PropsWithChildren) {
                     </ol>
                     <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
                          <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
-                            <a href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore`} target="_blank" rel="noopener noreferrer">
+                            <a href={`https://console.firebase.google.com/project/${projectId}/firestore`} target="_blank" rel="noopener noreferrer">
                                 Open Firestore Console
                                 <ExternalLink className="ml-2 h-4 w-4" />
                             </a>

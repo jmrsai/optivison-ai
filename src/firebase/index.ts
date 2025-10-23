@@ -11,9 +11,11 @@ export function initializeFirebase(): {
   firestore: Firestore;
   auth: Auth;
   analytics: Analytics | null;
+  config: Record<string, string>;
 } {
+  const config = getFirebaseConfigClient();
   const apps = getApps();
-  const app = apps.length > 0 ? apps[0] : initializeApp(getFirebaseConfigClient());
+  const app = apps.length > 0 ? apps[0] : initializeApp(config);
 
   const auth = getAuth(app);
   const firestore = getFirestore(app);
@@ -27,7 +29,7 @@ export function initializeFirebase(): {
     }
   }
 
-  return { firebaseApp: app, firestore, auth, analytics };
+  return { firebaseApp: app, firestore, auth, analytics, config };
 }
 
 export * from './provider';
