@@ -9,51 +9,71 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Loader, VenetianMask } from 'lucide-react';
 import type { Patient, Scan, UserProfile } from '@/lib/types';
-import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
-import { useDocument, useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
-import { doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { updatePatient } from '@/lib/patient-service';
 import { Card, CardContent } from '@/components/ui/card';
-import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 import { MedicalChartBot } from '@/components/medical-chart-bot';
 import { ClientLayout } from '@/components/layout/client-layout';
+import { useEffect, useState } from 'react';
+
+function getPatientData(patientId: string): { patient: Patient | null, scans: Scan[] } {
+  if (typeof window === 'undefined') return { patient: null, scans: [] };
+
+  const allPatients = JSON.parse(localStorage.getItem('patients') || '{}');
+  const allScans = JSON.parse(localStorage.getItem('scans') || '{}');
+  
+  const patient = allPatients[patientId] ? { id: patientId, ...allPatients[patientId] } : null;
+  const scans = Object.values(allScans).filter((s: any) => s.patientId === patientId) as Scan[];
+  
+  scans.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return { patient, scans };
+}
+
+function getUserProfile(uid: string): UserProfile | null {
+    if (typeof window === 'undefined') return null;
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    return users[uid] || null;
+}
+
 
 function PatientPageContent() {
   const params = useParams();
   const id = params.id as string;
   const { user, loading: userLoading } = useUser();
-  const firestore = useFirestore();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const [profile] = useDocumentData(
-    user ? doc(firestore, 'users', user.uid) : undefined
-  );
-  const userProfile = profile as UserProfile | undefined;
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [scans, setScans] = useState<Scan[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
+  useEffect(() => {
+    if (id) {
+        const { patient: p, scans: s } = getPatientData(id);
+        setPatient(p);
+        setScans(s);
+    }
+    setDataLoading(false);
+  }, [id]);
 
-  const patientRef = useMemoFirebase(
-    () => (id ? doc(firestore, 'patients', id) : undefined),
-    [firestore, id]
-  );
-  const scansQuery = useMemoFirebase(
-    () => (id ? query(collection(firestore, 'scans'), where('patientId', '==', id), orderBy('date', 'desc')) : undefined),
-    [firestore, id]
-  );
+  useEffect(() => {
+    if (user) {
+        const profile = getUserProfile(user.uid);
+        setUserProfile(profile);
+    }
+  }, [user]);
 
-  const [patientDoc, patientLoading, patientError] = useDocument(patientRef);
-  const [scansCollection, scansLoading, scansError] = useCollection(scansQuery);
-  
-  const patient = patientDoc?.data() ? { id: patientDoc.id, ...patientDoc.data() } as Patient : null;
-  const scans = scansCollection?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Scan)) || [];
   const completedScans = scans.filter(s => s.status === 'completed' && s.analysis);
 
-
-  const handlePatientUpdate = async (updatedPatient: Partial<Patient>) => {
+  const handlePatientUpdate = async (updatedPatientData: Partial<Patient>) => {
     if (!id) return;
-    await updatePatient(firestore, id, updatedPatient);
+    await updatePatient(id, updatedPatientData);
+    // Re-fetch data to reflect update
+    const { patient: p } = getPatientData(id);
+    setPatient(p);
   };
   
-  if (patientLoading || userLoading || scansLoading) {
+  if (dataLoading || userLoading) {
     return (
         <main className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
@@ -64,10 +84,9 @@ function PatientPageContent() {
     );
   }
 
-  // Security check: If the user is a clinician, ensure they are the assigned one.
-  // If the user is a patient, ensure they are viewing their own record.
-  if (user && patient) {
-    if (userProfile?.role === 'clinician' && patient.clinicianId !== user.uid) {
+  // Security check
+  if (user && patient && userProfile) {
+    if (userProfile.role === 'clinician' && patient.clinicianId !== user.uid) {
        return (
           <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
             <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
@@ -78,7 +97,7 @@ function PatientPageContent() {
           </main>
       )
     }
-    if (userProfile?.role === 'patient' && patient.userId !== user.uid) {
+    if (userProfile.role === 'patient' && patient.userId !== user.uid) {
         return (
           <main className="flex-1 container mx-auto p-4 md:p-8 text-center">
             <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
@@ -90,7 +109,6 @@ function PatientPageContent() {
       )
     }
   }
-
 
   if (!patient) {
     notFound();

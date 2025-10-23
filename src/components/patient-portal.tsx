@@ -1,16 +1,12 @@
 
 'use client';
 
-import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import type { User } from 'firebase/auth';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import { useCollection, useQuery } from 'react-firebase-hooks/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Scan, MessageSquare, Files, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 import type { Patient, Scan as ScanType } from '@/lib/types';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -18,6 +14,25 @@ import { useEffect, useState } from 'react';
 type PatientPortalProps = {
   patientUser: User;
 };
+
+function getPatientPortalData(userId: string): { patient: Patient | null, scans: ScanType[] } {
+    if (typeof window === 'undefined') return { patient: null, scans: [] };
+
+    const allPatients = JSON.parse(localStorage.getItem('patients') || '{}');
+    const allScans = JSON.parse(localStorage.getItem('scans') || '{}');
+
+    const patient = Object.values(allPatients).find((p: any) => p.userId === userId) as Patient | null;
+
+    if (!patient) {
+        return { patient: null, scans: [] };
+    }
+
+    const scans = Object.values(allScans)
+        .filter((s: any) => s.patientId === patient.id)
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()) as ScanType[];
+    
+    return { patient, scans };
+}
 
 function ScanHistoryItem({ scan, patientId }: { scan: ScanType, patientId: string }) {
   return (
@@ -34,34 +49,19 @@ function ScanHistoryItem({ scan, patientId }: { scan: ScanType, patientId: strin
 }
 
 export function PatientPortal({ patientUser }: PatientPortalProps) {
-  const firestore = useFirestore();
-  const [patientId, setPatientId] = useState<string | null>(null);
-
-  // 1. Find the patient document linked to this authenticated user.
-  const patientQuery = useMemoFirebase(
-    () => query(collection(firestore, 'patients'), where('userId', '==', patientUser.uid), limit(1)),
-    [firestore, patientUser.uid]
-  );
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [scans, setScans] = useState<ScanType[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const [patientSnapshot, patientLoading] = useCollection(patientQuery);
-
   useEffect(() => {
-    if (patientSnapshot && !patientSnapshot.empty) {
-      setPatientId(patientSnapshot.docs[0].id);
+    if (patientUser) {
+        const { patient: p, scans: s } = getPatientPortalData(patientUser.uid);
+        setPatient(p);
+        setScans(s);
     }
-  }, [patientSnapshot]);
+    setLoading(false);
+  }, [patientUser]);
 
-
-  // 2. Fetch scans for the found patient ID.
-  const scansQuery = useMemoFirebase(
-    () => (patientId ? query(collection(firestore, 'scans'), where('patientId', '==', patientId), orderBy('date', 'desc')) : null),
-    [firestore, patientId]
-  );
-
-  const [scansSnapshot, scansLoading] = useCollection(scansQuery);
-  const scans = scansSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScanType)) || [];
-
-  const isLoading = patientLoading || (patientId && scansLoading);
 
   return (
     <div className="space-y-8">
@@ -99,14 +99,14 @@ export function PatientPortal({ patientUser }: PatientPortalProps) {
           <CardDescription>Review your past scans and analysis results.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="mr-2 h-6 w-6 animate-spin" />
               <p>Loading your scan history...</p>
             </div>
-          ) : scans.length > 0 && patientId ? (
+          ) : scans.length > 0 && patient ? (
             <div className="space-y-3">
-              {scans.map(scan => <ScanHistoryItem key={scan.id} scan={scan} patientId={patientId} />)}
+              {scans.map(scan => <ScanHistoryItem key={scan.id} scan={scan} patientId={patient.id} />)}
             </div>
           ) : (
             <div className="text-center py-8">

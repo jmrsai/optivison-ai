@@ -12,9 +12,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase/auth/use-auth';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { addPatient } from '@/lib/patient-service';
@@ -32,7 +31,6 @@ function RegisterContent() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,7 +45,7 @@ function RegisterContent() {
   const isSubmitting = form.formState.isSubmitting;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth || !firestore) return;
+    if (!auth) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
@@ -56,16 +54,21 @@ function RegisterContent() {
         displayName: values.name,
       });
 
-      // Save user role in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
-        displayName: values.name,
-        email: values.email,
-        role: values.role,
-      });
+      // Save user role in localStorage
+      if (typeof window !== 'undefined') {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        users[user.uid] = {
+            displayName: values.name,
+            email: values.email,
+            role: values.role,
+        };
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+
 
       // If user is a patient, create a corresponding patient document
       if (values.role === 'patient') {
-        await addPatient(firestore, {
+        await addPatient({
           userId: user.uid, // Link patient doc to auth user
           clinicianId: 'unassigned', // Or some default value
           name: values.name,

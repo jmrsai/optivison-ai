@@ -121,31 +121,5 @@
   },
   "auth": {
     "providers": ["password", "google.com", "phone"]
-  },
-  "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/userProfile"
-      },
-      "description": "Stores user profile information, including their role."
-    },
-    "/patients/{patientId}": {
-      "schema": {
-        "$ref": "#/entities/patient"
-      },
-      "description": "Stores patient records, accessible by assigned clinicians."
-    },
-    "/scans/{scanId}": {
-      "schema": {
-        "$ref": "#/entities/scan"
-      },
-      "description": "Stores individual scan records."
-    },
-    "/messages/{messageId}": {
-      "schema": {
-        "$ref": "#/entities/message"
-      },
-      "description": "Stores chat messages between users."
-    }
   }
 }

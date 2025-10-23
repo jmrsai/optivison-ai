@@ -1,66 +1,62 @@
-import { addDoc, collection, doc, updateDoc, type Firestore } from "firebase/firestore";
 import type { Patient } from "./types";
 import { encrypt } from "./crypto";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
+
+const getPatientsFromStorage = (): Record<string, Patient> => {
+  if (typeof window === 'undefined') return {};
+  const data = localStorage.getItem('patients');
+  return data ? JSON.parse(data) : {};
+};
+
+const savePatientsToStorage = (patients: Record<string, Patient>) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('patients', JSON.stringify(patients));
+};
 
 /**
- * Adds a new patient to the Firestore database, encrypting sensitive fields.
- * @param firestore The Firestore instance.
+ * Adds a new patient to localStorage, encrypting sensitive fields.
  * @param patient The patient data to add (without the id).
  * @returns The ID of the newly created patient document.
  */
-export async function addPatient(firestore: Firestore, patient: Omit<Patient, 'id'>): Promise<string> {
-  // Encrypt sensitive fields before saving
+export async function addPatient(patient: Omit<Patient, 'id'>): Promise<string> {
   const encryptedHistory = await encrypt(patient.history);
 
-  const patientData: Omit<Patient, 'id'> = {
+  const patientId = `patient_${Date.now()}`;
+  const newPatient: Patient = {
     ...patient,
+    id: patientId,
     history: encryptedHistory,
   };
 
-  // If the patient is registering themselves, link their auth UID
   if (patient.role === 'patient' && patient.userId) {
-    patientData.userId = patient.userId;
+    newPatient.userId = patient.userId;
   }
   
-  const docRef = await addDoc(collection(firestore, "patients"), patientData as any)
-    .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: `/patients`,
-            operation: 'create',
-            requestResourceData: patientData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError; // Re-throw to allow the caller to handle it.
-    });
-
-  return docRef.id;
+  const patients = getPatientsFromStorage();
+  patients[patientId] = newPatient;
+  savePatientsToStorage(patients);
+  
+  return patientId;
 }
 
 /**
- * Updates an existing patient in the Firestore database.
- * @param firestore The Firestore instance.
+ * Updates an existing patient in localStorage.
  * @param patientId The ID of the patient to update.
- * @param patient The partial patient data to update.
+ * @param patientUpdate The partial patient data to update.
  */
-export async function updatePatient(firestore: Firestore, patientId: string, patient: Partial<Patient>): Promise<void> {
-  const patientRef = doc(firestore, "patients", patientId);
+export async function updatePatient(patientId: string, patientUpdate: Partial<Patient>): Promise<void> {
+  const patients = getPatientsFromStorage();
+  const existingPatient = patients[patientId];
 
-  // If history is being updated, encrypt it
-  const updateData = { ...patient };
-  if (patient.history) {
-    updateData.history = await encrypt(patient.history);
+  if (!existingPatient) {
+    throw new Error("Patient not found");
   }
-  
-  updateDoc(patientRef, updateData)
-    .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: patientRef.path,
-            operation: 'update',
-            requestResourceData: updateData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError;
-    });
+
+  const updateData = { ...patientUpdate };
+  if (patientUpdate.history) {
+    updateData.history = await encrypt(patientUpdate.history);
+  }
+
+  const updatedPatient = { ...existingPatient, ...updateData };
+  patients[patientId] = updatedPatient;
+  savePatientsToStorage(patients);
 }

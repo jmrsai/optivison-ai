@@ -12,9 +12,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase/auth/use-auth';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, getAdditionalUserInfo } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,11 +39,21 @@ function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
+  const saveUserToLocalStorage = (user: any) => {
+    if (typeof window === 'undefined') return;
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    users[user.uid] = {
+        displayName: user.displayName,
+        email: user.email,
+        role: 'clinician', 
+    };
+    localStorage.setItem('users', JSON.stringify(users));
+  };
 
 
   const emailForm = useForm<z.infer<typeof formSchema>>({
@@ -139,22 +148,13 @@ function LoginContent() {
   }
 
   const handleVerifyCode = async (data: z.infer<typeof phoneFormSchema>) => {
-    if (!confirmationResult || !data.verificationCode || !auth || !firestore) return;
+    if (!confirmationResult || !data.verificationCode || !auth) return;
     setIsSubmittingPhone(true);
     try {
         const userCredential = await confirmationResult.confirm(data.verificationCode);
         const user = userCredential.user;
         
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-             await setDoc(userDocRef, {
-                displayName: user.phoneNumber,
-                email: user.email,
-                role: 'clinician',
-            });
-        }
+        saveUserToLocalStorage(user);
 
         toast({
             title: "Login Successful",
@@ -174,7 +174,7 @@ function LoginContent() {
   }
 
   const handleSocialLogin = async (providerName: 'google') => {
-    if (!auth || !firestore) return;
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
@@ -185,11 +185,7 @@ function LoginContent() {
       
       const additionalUserInfo = getAdditionalUserInfo(result);
       if (additionalUserInfo?.isNewUser) {
-        await setDoc(doc(firestore, 'users', user.uid), {
-            displayName: user.displayName,
-            email: user.email,
-            role: 'clinician', 
-        });
+        saveUserToLocalStorage(user);
       }
 
       toast({

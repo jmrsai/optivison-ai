@@ -18,10 +18,7 @@ import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { fileToDataUri } from '@/lib/utils';
-import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
-import { useDocumentData } from 'react-firebase-hooks/firestore';
-import { doc } from 'firebase/firestore';
 import { generatePatientReport } from '@/ai/flows/generate-patient-report';
 
 type PatientAnalysisProps = {
@@ -37,6 +34,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+function getUserProfile(uid: string): UserProfile | null {
+    if (typeof window === 'undefined') return null;
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    return users[uid] || null;
+}
+
 
 export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: PatientAnalysisProps) {
   const [scans, setScans] = useState<Scan[]>(initialScans);
@@ -44,17 +47,20 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
   const { toast } = useToast();
   const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<LongitudinalAnalysisOutput | null>(null);
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
-  const firestore = useFirestore();
   const { user } = useUser();
-  const [profile] = useDocumentData(
-    user ? doc(firestore, 'users', user.uid) : undefined
-  );
-  const userProfile = profile as UserProfile | undefined;
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
 
   useEffect(() => {
     setScans(initialScans);
   }, [initialScans]);
+  
+  useEffect(() => {
+    if (user) {
+        const profile = getUserProfile(user.uid);
+        setUserProfile(profile);
+    }
+  }, [user]);
 
   const handleNewAnalysis = async ({
     imageFile,
@@ -68,7 +74,6 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
     setSheetOpen(false);
     if (!user) return;
 
-    const tempId = `scan-${Date.now()}`;
     const scanDate = new Date().toISOString().split('T')[0];
 
     const newScanPlaceholder: Omit<Scan, 'id'> = {
@@ -80,14 +85,14 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
       status: 'processing',
     };
     
-    // Add placeholder to UI immediately
-    const tempScanForUi = { ...newScanPlaceholder, id: tempId };
-    setScans(prevScans => [tempScanForUi, ...prevScans]);
-
     let scanId: string | null = null;
-
     try {
-        scanId = await addScan(firestore, newScanPlaceholder);
+        scanId = await addScan(newScanPlaceholder);
+        
+        // Add placeholder to UI immediately
+        const tempScanForUi = { ...newScanPlaceholder, id: scanId };
+        setScans(prevScans => [tempScanForUi, ...prevScans]);
+
 
         const eyeScanDataUri = await fileToDataUri(imageFile);
         let documentDataUri: string | undefined;
@@ -115,10 +120,10 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             status: 'completed',
         };
         
-        await updateScan(firestore, scanId, analysisUpdate);
+        await updateScan(scanId, analysisUpdate);
 
         // Update UI with analysis, but report is still pending
-        setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, ...analysisUpdate, id: scanId! } : s)));
+        setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, ...analysisUpdate } : s)));
         
         toast({ title: "Analysis Complete, Generating Report...", description: "The AI is now generating the full patient report." });
 
@@ -136,7 +141,7 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
             report: reportResult.report,
         };
 
-        await updateScan(firestore, scanId, reportUpdate);
+        await updateScan(scanId, reportUpdate);
 
         setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, ...reportUpdate } : s)));
         
@@ -154,12 +159,9 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         console.error("AI analysis pipeline failed:", error);
         if (scanId) {
             const failedScanUpdate = { status: 'failed' as const };
-            await updateScan(firestore, scanId, failedScanUpdate);
+            await updateScan(scanId, failedScanUpdate);
             // Update UI for the failed scan
-             setScans((prev) => prev.map((s) => (s.id === tempId ? { ...s, status: 'failed', id: scanId! } : s)));
-        } else {
-            // Remove the placeholder if adding the doc failed
-            setScans((prev) => prev.filter(s => s.id !== tempId));
+             setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, status: 'failed' } : s)));
         }
 
         toast({

@@ -13,7 +13,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useToast } from "@/hooks/use-toast";
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useFirestore } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addPatient } from '@/lib/patient-service';
 
@@ -33,7 +32,6 @@ type RegisterPatientFormProps = {
 export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientFormProps) {
   const { toast } = useToast();
   const { user, loading: userLoading } = useUser();
-  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +64,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
     };
 
     try {
-      const patientId = await addPatient(firestore, newPatient);
+      const patientId = await addPatient(newPatient);
       toast({
           title: "Patient Registered",
           description: `${newPatient.name} has been successfully registered.`,
@@ -77,7 +75,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
        toast({
           variant: "destructive",
           title: "Registration Failed",
-          description: "Could not save patient to the database.",
+          description: "Could not save patient data locally.",
       });
       console.error("Failed to register patient:", error);
     }

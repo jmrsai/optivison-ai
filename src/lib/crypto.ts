@@ -4,35 +4,34 @@
 // WARNING: This is a simplified cryptographic implementation for demonstration purposes.
 // A production-grade E2EE system requires robust, audited key management and handling.
 
-import { webcrypto } from 'crypto';
-
-const isBrowser = () => typeof window !== 'undefined';
+// This implementation will fail in non-browser environments (like server-side rendering)
+// because it relies on the Web Crypto API which may not be globally available.
 
 let secretKey: CryptoKey | null = null;
 const KEY_STORAGE_NAME = 'optivision_crypto_key';
 
-const cryptoProvider = () => {
-    if (isBrowser()) {
-        return window.crypto;
+
+const ensureCryptoReady = async () => {
+    if (typeof window === 'undefined' || !window.crypto || !window.crypto.subtle) {
+        // Fallback for non-browser environments.
+        // In a real app, you might use a Node.js crypto library here for server-side operations.
+        // For this demo, we'll throw an error if crypto is not available.
+        throw new Error('Web Crypto API is not available in this environment.');
     }
-    return webcrypto;
 }
+
 
 /**
  * Gets the secret key from storage or generates a new one.
  */
 async function getKey(): Promise<CryptoKey> {
+  await ensureCryptoReady();
+  const crypto = window.crypto;
+
   if (secretKey) {
     return secretKey;
   }
 
-  const crypto = cryptoProvider();
-
-  if (!crypto?.subtle) {
-    throw new Error('Web Crypto API is not available in this environment.');
-  }
-
-  if (isBrowser()) {
     let storedKey = localStorage.getItem(KEY_STORAGE_NAME);
 
     if (storedKey) {
@@ -50,7 +49,6 @@ async function getKey(): Promise<CryptoKey> {
         console.error('Failed to import stored key, generating a new one.', e);
         }
     }
-  }
 
 
   // Generate a new key if one doesn't exist
@@ -63,11 +61,9 @@ async function getKey(): Promise<CryptoKey> {
     ['encrypt', 'decrypt']
   );
 
-  if (isBrowser()) {
     // Export and store the new key
     const jwk = await crypto.subtle.exportKey('jwk', newKey);
     localStorage.setItem(KEY_STORAGE_NAME, JSON.stringify(jwk));
-  }
   
   secretKey = newKey;
   return secretKey;
@@ -80,7 +76,8 @@ async function getKey(): Promise<CryptoKey> {
  */
 export async function encrypt(plaintext: string): Promise<string> {
   if (!plaintext) return plaintext; 
-  const crypto = cryptoProvider();
+  await ensureCryptoReady();
+  const crypto = window.crypto;
 
   try {
     const key = await getKey();
@@ -118,7 +115,8 @@ export async function decrypt(encryptedString: string): Promise<string> {
     return encryptedString;
   }
   
-  const crypto = cryptoProvider();
+  await ensureCryptoReady();
+  const crypto = window.crypto;
 
   try {
     const key = await getKey();

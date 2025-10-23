@@ -1,15 +1,15 @@
 'use client';
 
-import { FirebaseProvider } from '@/firebase';
+import { AuthProvider } from '@/firebase/auth/provider';
 import { AppHeader } from './app-header';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
-    <FirebaseProvider>
+    <AuthProvider>
       <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
         {children}
       </div>
-    </FirebaseProvider>
+    </AuthProvider>
   );
 }

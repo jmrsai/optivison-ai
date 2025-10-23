@@ -1,58 +1,60 @@
-import { addDoc, collection, doc, updateDoc, type Firestore } from "firebase/firestore";
 import type { Scan } from "./types";
 import { encrypt } from "./crypto";
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
-import { errorEmitter } from "@/firebase/error-emitter";
+
+const getScansFromStorage = (): Record<string, Scan> => {
+  if (typeof window === 'undefined') return {};
+  const data = localStorage.getItem('scans');
+  return data ? JSON.parse(data) : {};
+};
+
+const saveScansToStorage = (scans: Record<string, Scan>) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('scans', JSON.stringify(scans));
+};
 
 /**
- * Adds a new scan to the Firestore database.
- * @param firestore The Firestore instance.
+ * Adds a new scan to localStorage.
  * @param scan The scan data to add (without the id).
  * @returns The ID of the newly created scan document.
  */
-export async function addScan(firestore: Firestore, scan: Omit<Scan, 'id'>): Promise<string> {
-  // Encrypt clinical notes if they exist
+export async function addScan(scan: Omit<Scan, 'id'>): Promise<string> {
   const scanData = { ...scan };
   if (scan.clinicalNotes) {
     scanData.clinicalNotes = await encrypt(scan.clinicalNotes);
   }
 
-  const docRef = await addDoc(collection(firestore, "scans"), scanData)
-    .catch((serverError) => {
-      const permissionError = new FirestorePermissionError({
-          path: `/scans`,
-          operation: 'create',
-          requestResourceData: scanData,
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-      throw serverError;
-    });
-  return docRef.id;
+  const scanId = `scan_${Date.now()}`;
+  const newScan: Scan = {
+    ...scanData,
+    id: scanId,
+  };
+
+  const scans = getScansFromStorage();
+  scans[scanId] = newScan;
+  saveScansToStorage(scans);
+  
+  return scanId;
 }
 
 /**
- * Updates an existing scan in the Firestore database.
- * @param firestore The Firestore instance.
+ * Updates an existing scan in localStorage.
  * @param scanId The ID of the scan to update.
- * @param scan The partial scan data to update.
+ * @param scanUpdate The partial scan data to update.
  */
-export async function updateScan(firestore: Firestore, scanId: string, scan: Partial<Scan>): Promise<void> {
-  const scanRef = doc(firestore, "scans", scanId);
+export async function updateScan(scanId: string, scanUpdate: Partial<Scan>): Promise<void> {
+  const scans = getScansFromStorage();
+  const existingScan = scans[scanId];
 
-  // Encrypt clinical notes if they are being updated
-  const updateData = { ...scan };
-  if (scan.clinicalNotes) {
-    updateData.clinicalNotes = await encrypt(scan.clinicalNotes);
+  if (!existingScan) {
+    throw new Error("Scan not found");
   }
 
-  updateDoc(scanRef, updateData)
-    .catch((serverError) => {
-      const permissionError = new FirestorePermissionError({
-        path: scanRef.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-      throw serverError;
-    });
+  const updateData = { ...scanUpdate };
+  if (scanUpdate.clinicalNotes) {
+    updateData.clinicalNotes = await encrypt(scanUpdate.clinicalNotes);
+  }
+  
+  const updatedScan = { ...existingScan, ...updateData };
+  scans[scanId] = updatedScan;
+  saveScansToStorage(scans);
 }

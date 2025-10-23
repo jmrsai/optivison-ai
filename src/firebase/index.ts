@@ -1,24 +1,27 @@
 // src/firebase/index.ts
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAnalytics, type Analytics } from "firebase/analytics";
-
 import { getFirebaseConfigClient } from './config';
 
-export function initializeFirebase(): {
+let authInstance: Auth | null = null;
+let firebaseAppInstance: FirebaseApp | null = null;
+let analyticsInstance: Analytics | null = null;
+
+export function initializeAuth(): {
   firebaseApp: FirebaseApp;
-  firestore: Firestore;
   auth: Auth;
   analytics: Analytics | null;
-  config: Record<string, string>;
 } {
+  if (firebaseAppInstance && authInstance) {
+    return { firebaseApp: firebaseAppInstance, auth: authInstance, analytics: analyticsInstance };
+  }
+
   const config = getFirebaseConfigClient();
   const apps = getApps();
   const app = apps.length > 0 ? apps[0] : initializeApp(config);
 
   const auth = getAuth(app);
-  const firestore = getFirestore(app);
   
   let analytics: Analytics | null = null;
   if (typeof window !== 'undefined') {
@@ -29,7 +32,11 @@ export function initializeFirebase(): {
     }
   }
 
-  return { firebaseApp: app, firestore, auth, analytics, config };
+  firebaseAppInstance = app;
+  authInstance = auth;
+  analyticsInstance = analytics;
+
+  return { firebaseApp: app, auth, analytics };
 }
 
-export * from './provider';
+export * from './auth/provider';
