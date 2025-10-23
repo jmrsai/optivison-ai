@@ -297,7 +297,7 @@ function LoginContent() {
                                                             <SelectContent>
                                                                 <ScrollArea className="h-64">
                                                                     {countries.map(country => (
-                                                                        <SelectItem key={`${country.code}-${country.dial_code}`} value={country.dial_code}>
+                                                                        <SelectItem key={`${country.name}-${country.dial_code}`} value={country.dial_code}>
                                                                             {country.code} ({country.dial_code})
                                                                         </SelectItem>
                                                                     ))}
@@ -395,3 +395,5 @@ export default function LoginPage() {
         </ClientLayout>
     )
 }
+
+    
