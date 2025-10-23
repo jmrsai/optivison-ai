@@ -3,9 +3,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyAgFv1mZHfjE12ifT7FHoCMnP97ysngwx0",
   authDomain: "synergy-research-hub.firebaseapp.com",
-  databaseURL: "https://synergy-research-hub-default-rtdb.firebaseio.com",
   projectId: "synergy-research-hub",
-  storageBucket: "synergy-research-hub.appspot.com",
   messagingSenderId: "617880536152",
   appId: "1:617880536152:web:f9d5ca6ef1da197cb1762d",
   measurementId: "G-6G5WCLY2WW"
