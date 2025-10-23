@@ -24,9 +24,13 @@
     },
     "patient": {
       "title": "Patient",
-      "description": "Represents a patient in the clinic.",
+      "description": "Represents a patient in the clinic, with encrypted medical history.",
       "type": "object",
       "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The auth UID of the patient if they have a portal account."
+        },
         "clinicianId": {
           "type": "string",
           "description": "The ID of the clinician assigned to this patient."
@@ -59,7 +63,7 @@
         },
         "history": {
           "type": "string",
-          "description": "The patient's medical history."
+          "description": "The patient's encrypted medical history."
         }
       },
       "required": ["clinicianId", "name", "age", "gender", "lastVisit", "riskLevel", "history"]
@@ -89,7 +93,7 @@
         },
         "clinicalNotes": {
           "type": "string",
-          "description": "Clinical notes associated with the scan."
+          "description": "Encrypted clinical notes associated with the scan."
         },
         "status": {
           "type": "string",

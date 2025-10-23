@@ -1,3 +1,4 @@
+
 import {z} from 'genkit';
 
 const AnalysisSchema = z.object({
@@ -174,8 +175,9 @@ export const DocumentAnalysisInputSchema = z.object({
 });
 
 export const DocumentAnalysisOutputSchema = z.object({
-  summary: z.string().describe("A concise overview of the document's purpose and main points."),
-  diagnoses: z.array(z.string()).describe("A list of all distinct medical diagnoses mentioned in the document."),
+  summary: z.string().describe("A concise one-sentence overview of the document's purpose and main points."),
+  keyFindings: z.string().describe("The most critical clinical findings or results from the document."),
+  priorConditions: z.array(z.string()).describe("A list of all distinct pre-existing medical diagnoses or conditions mentioned in the document."),
   medications: z.array(z.string()).describe("A list of all medications mentioned, including dosage if available."),
   recommendations: z.string().describe("A summary of the primary recommendations, follow-up actions, or treatment plans from the document."),
 });

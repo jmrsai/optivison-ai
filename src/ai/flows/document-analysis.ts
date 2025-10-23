@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -24,10 +25,11 @@ Document to Analyze:
 {{media url=documentDataUri}}
 
 Please analyze the document and fill out the following fields based on its content. Be precise and thorough.
-- **summary**: Provide a concise overview of the document's purpose and main points.
-- **diagnoses**: List all distinct medical diagnoses mentioned.
+- **summary**: Provide a concise one-sentence overview of the document's purpose (e.g., "Post-operative follow-up report for cataract surgery.").
+- **keyFindings**: Extract the most critical clinical findings or results from the document.
+- **priorConditions**: List all distinct pre-existing medical diagnoses or conditions mentioned.
 - **medications**: List all medications mentioned, including dosage if available.
-- **recommendations**: Summarize the primary recommendations, follow-up actions, or treatment plans.`,
+- **recommendations**: Summarize the primary recommendations, follow-up actions, or treatment plans from the document.`,
 });
 
 
