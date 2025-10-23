@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Patient } from '@/lib/types';
+import type { Patient } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -18,8 +18,8 @@ import { addPatient } from '@/lib/patient-service';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  age: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, {
-    message: 'Age must be a positive number.',
+  age: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0 && Number.isInteger(Number(val)), {
+    message: 'Age must be a positive integer.',
   }).transform(Number),
   gender: z.enum(['Male', 'Female', 'Other']),
   history: z.string().min(10, { message: 'History must be at least 10 characters.' }),
@@ -31,7 +31,7 @@ type RegisterPatientFormProps = {
 
 export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientFormProps) {
   const { toast } = useToast();
-  const { user, loading: userLoading } = useUser();
+  const { user } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,13 +56,15 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
     }
     
     try {
-      const patientId = await addPatient({
+      const patientData: Omit<Patient, 'id'> = {
         ...values,
         clinicianId: user.uid,
         lastVisit: new Date().toISOString().split('T')[0],
         avatarUrl: placeholderImages[`patient${(Math.floor(Math.random() * 4) + 1)}` as keyof typeof placeholderImages].src,
         riskLevel: 'N/A',
-      });
+      };
+      
+      const patientId = await addPatient(patientData);
 
       toast({
           title: "Patient Registered",
@@ -84,7 +86,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
   return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <fieldset disabled={isSubmitting || userLoading} className="space-y-6">
+            <fieldset disabled={isSubmitting} className="space-y-6">
             <FormField
                 control={form.control}
                 name="name"
@@ -106,7 +108,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
                     <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                        <Input inputMode="numeric" placeholder="68" {...field} />
+                        <Input type="number" placeholder="68" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -154,7 +156,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
                 )}
             />
             <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={isSubmitting || userLoading}>
+                <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                     <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

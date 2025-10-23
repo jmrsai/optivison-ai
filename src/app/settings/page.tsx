@@ -1,7 +1,6 @@
 
 'use client';
 
-import { AppHeader } from '@/components/layout/app-header';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,15 +12,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, HardDrive, HardDriveUpload, Loader2, LogIn, LogOut } from 'lucide-react';
+import { ArrowLeft, Loader2, LogIn, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/firebase/auth/provider';
 import { useUser } from '@/firebase/auth/use-user';
-import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, type User, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { exportDataToDrive } from '@/ai/flows/google-drive-export';
 import { useRouter } from 'next/navigation';
 import { ClientLayout } from '@/components/layout/client-layout';
 
@@ -33,97 +31,27 @@ function SettingsContent() {
   const { user, loading: userLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
-  
-  const [googleDriveUser, setGoogleDriveUser] = useState<User | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
 
   useEffect(() => {
     setIsDarkMode(theme === 'dark');
   }, [theme]);
-  
-  useEffect(() => {
-    if (user) {
-        setGoogleDriveUser(user);
-    }
-  }, [user]);
 
   const handleThemeChange = (checked: boolean) => {
     setTheme(checked ? 'dark' : 'light');
     setIsDarkMode(checked);
   };
-  
-  const handleGoogleDriveConnect = async () => {
-    if (!auth) return;
-    setIsConnecting(true);
-
-    const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/drive.file');
-    provider.setCustomParameters({
-      prompt: 'consent', // Force account selection and consent screen
-    });
-
-    try {
-      const result = await signInWithPopup(auth, provider);
-      setGoogleDriveUser(result.user);
-      
-      const additionalUserInfo = getAdditionalUserInfo(result);
-      if (additionalUserInfo?.isNewUser) {
-        toast({
-          title: "Account Linked",
-          description: "Your Google account is now ready for backups."
-        });
-      } else {
-        toast({
-          title: "Google Drive Connected",
-          description: "You can now back up your data to Google Drive.",
-        });
-      }
-    } catch (error: any) {
-      console.error("Google Drive connection failed:", error);
-      toast({
-        variant: 'destructive',
-        title: "Connection Failed",
-        description: "Could not connect to Google Drive. Please try again."
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleExport = async () => {
-    if (!user || !googleDriveUser) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in and connected to Google Drive.' });
-        return;
-    }
-
-    setIsExporting(true);
-    toast({ title: 'Starting Backup...', description: 'Preparing your data for export. This may take a moment.' });
-
-    try {
-        const idToken = await googleDriveUser.getIdToken(true); // Force refresh the token
-        const result = await exportDataToDrive({ idToken, clinicianId: user.uid });
-        toast({
-            title: 'Backup Successful',
-            description: `Your data has been saved to a new folder in your Google Drive named '${result.folderName}'.`,
-        });
-    } catch (error) {
-        console.error("Export to Drive failed:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Backup Failed',
-            description: 'There was an error while exporting your data. Please try again.',
-        });
-    } finally {
-        setIsExporting(false);
-    }
-};
 
   const handleLogout = async () => {
     if (!auth) return;
     try {
       await signOut(auth);
+      // Clear local storage on logout
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('users');
+        localStorage.removeItem('patients');
+        localStorage.removeItem('scans');
+        localStorage.removeItem('optivision_crypto_key');
+      }
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
@@ -209,36 +137,6 @@ function SettingsContent() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader>
-                <CardTitle>Data Management</CardTitle>
-                <CardDescription>
-                    Export a backup of your patient data to your personal Google Drive.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 border rounded-md bg-muted/20">
-                    <div className="flex items-center gap-4">
-                        <HardDrive className="h-8 w-8 text-primary"/>
-                        <div>
-                            <h4 className="font-semibold">Google Drive Backup</h4>
-                             <p className="text-sm text-muted-foreground">
-                                {googleDriveUser ? `Connected as ${googleDriveUser.email}` : 'Not connected'}
-                            </p>
-                        </div>
-                    </div>
-                     <Button variant="outline" onClick={handleGoogleDriveConnect} disabled={isConnecting}>
-                        {isConnecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                        {googleDriveUser ? 'Reconnect' : 'Connect'}
-                    </Button>
-                </div>
-                 <Button onClick={handleExport} disabled={!googleDriveUser || isExporting || userLoading} className="w-full">
-                    {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HardDriveUpload className="mr-2 h-4 w-4" />}
-                    {isExporting ? 'Exporting...' : 'Export & Backup to Drive'}
-                </Button>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
@@ -281,10 +179,10 @@ function SettingsContent() {
             <CardHeader>
                 <CardTitle>Account Actions</CardTitle>
                 <CardDescription>
-                    Manage your session.
+                    Manage your session or delete your local data.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out

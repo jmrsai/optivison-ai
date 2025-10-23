@@ -1,7 +1,6 @@
 
 'use client';
 
-import { AppHeader } from '@/components/layout/app-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,6 +20,7 @@ import { countries } from '@/lib/countries';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ClientLayout } from '@/components/layout/client-layout';
+import type { UserProfile } from '@/lib/types';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -44,13 +44,13 @@ function LoginContent() {
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
-  const saveUserToLocalStorage = (user: any) => {
+  const saveUserToLocalStorage = (profile: UserProfile) => {
     if (typeof window === 'undefined') return;
     const users = JSON.parse(localStorage.getItem('users') || '{}');
-    users[user.uid] = {
-        displayName: user.displayName,
-        email: user.email,
-        role: 'clinician', 
+    users[profile.uid] = {
+        displayName: profile.displayName,
+        email: profile.email,
+        role: profile.role, 
     };
     localStorage.setItem('users', JSON.stringify(users));
   };
@@ -154,7 +154,14 @@ function LoginContent() {
         const userCredential = await confirmationResult.confirm(data.verificationCode);
         const user = userCredential.user;
         
-        saveUserToLocalStorage(user);
+        // Assume phone users are clinicians for this demo
+        const userProfile: UserProfile = {
+            uid: user.uid,
+            displayName: user.displayName || user.phoneNumber,
+            email: user.email,
+            role: 'clinician',
+        };
+        saveUserToLocalStorage(userProfile);
 
         toast({
             title: "Login Successful",
@@ -185,7 +192,14 @@ function LoginContent() {
       
       const additionalUserInfo = getAdditionalUserInfo(result);
       if (additionalUserInfo?.isNewUser) {
-        saveUserToLocalStorage(user);
+        // Assume new Google users are clinicians
+        const userProfile: UserProfile = {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            role: 'clinician',
+        };
+        saveUserToLocalStorage(userProfile);
       }
 
       toast({

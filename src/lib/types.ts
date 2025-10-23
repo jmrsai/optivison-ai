@@ -1,12 +1,11 @@
 
 import type { AnalyzeEyeScanOutputSchema } from "@/ai/schemas";
-import type { Timestamp } from "firebase/firestore";
-import { z } from "genkit";
+import { z } from 'genkit';
 
 export type UserProfile = {
   uid: string;
-  email: string;
-  displayName: string;
+  email: string | null;
+  displayName: string | null;
   role: 'clinician' | 'patient';
 };
 
@@ -20,8 +19,7 @@ export type Patient = {
   lastVisit: string; // ISO string date
   avatarUrl: string;
   riskLevel: 'Low' | 'Medium' | 'High' | 'N/A';
-  history: string;
-  role?: 'patient';
+  history: string; // This will be the encrypted string
 };
 
 export type ScanAnalysis = z.infer<typeof AnalyzeEyeScanOutputSchema>;
@@ -33,11 +31,10 @@ export type Scan = {
   clinicianId: string;
   date: string; // ISO string date
   imageUrl: string;
-  clinicalNotes: string;
+  clinicalNotes: string; // This will be the encrypted string
   status: 'completed' | 'processing' | 'failed';
   analysis?: ScanAnalysis;
   report?: string;
-  createdAt?: Timestamp;
 };
 
 export type Message = {
@@ -45,5 +42,5 @@ export type Message = {
     text: string;
     senderId: string;
     receiverId: string;
-    timestamp: Timestamp;
+    timestamp: number; // Use number for client-side timestamp
 };

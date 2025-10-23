@@ -1,4 +1,6 @@
 
+'use client';
+
 import type { Patient } from "./types";
 import { encrypt } from "./crypto";
 
@@ -22,8 +24,17 @@ export async function addPatient(patient: Omit<Patient, 'id'>): Promise<string> 
   const encryptedHistory = await encrypt(patient.history);
 
   const patientId = patient.userId || `patient_${Date.now()}`;
+  
+  // Ensure we are saving the Omit<Patient, 'id'> type
   const newPatientData: Omit<Patient, 'id'> = {
-    ...patient,
+    clinicianId: patient.clinicianId,
+    userId: patient.userId,
+    name: patient.name,
+    age: patient.age,
+    gender: patient.gender,
+    lastVisit: patient.lastVisit,
+    avatarUrl: patient.avatarUrl,
+    riskLevel: patient.riskLevel,
     history: encryptedHistory,
   };
   
@@ -39,7 +50,7 @@ export async function addPatient(patient: Omit<Patient, 'id'>): Promise<string> 
  * @param patientId The ID of the patient to update.
  * @param patientUpdate The partial patient data to update.
  */
-export async function updatePatient(patientId: string, patientUpdate: Partial<Patient>): Promise<void> {
+export async function updatePatient(patientId: string, patientUpdate: Partial<Omit<Patient, 'id'>>): Promise<void> {
   const patients = getPatientsFromStorage();
   const existingPatient = patients[patientId];
 
@@ -47,7 +58,8 @@ export async function updatePatient(patientId: string, patientUpdate: Partial<Pa
     throw new Error("Patient not found");
   }
 
-  const updateData = { ...patientUpdate };
+  const updateData: Partial<Omit<Patient, 'id'>> = { ...patientUpdate };
+  
   if (patientUpdate.history) {
     updateData.history = await encrypt(patientUpdate.history);
   }

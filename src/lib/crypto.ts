@@ -47,6 +47,7 @@ async function getKey(): Promise<CryptoKey> {
         return secretKey;
         } catch (e) {
         console.error('Failed to import stored key, generating a new one.', e);
+        // If import fails, proceed to generate a new key.
         }
     }
 
@@ -57,7 +58,7 @@ async function getKey(): Promise<CryptoKey> {
       name: 'AES-GCM',
       length: 256,
     },
-    true, // a
+    true, // extractable
     ['encrypt', 'decrypt']
   );
 
@@ -101,7 +102,7 @@ export async function encrypt(plaintext: string): Promise<string> {
   } catch (error) {
     console.error("Encryption failed", error);
     // In case of failure, return plaintext. In a real E2EE app, this should fail loudly.
-    return plaintext;
+    return `ENCRYPTION_FAILED::${plaintext}`;
   }
 }
 
@@ -112,6 +113,7 @@ export async function encrypt(plaintext: string): Promise<string> {
  */
 export async function decrypt(encryptedString: string): Promise<string> {
    if (!encryptedString || !encryptedString.includes('.')) {
+    // Return as is if it doesn't appear to be encrypted by this system.
     return encryptedString;
   }
   
@@ -143,6 +145,7 @@ export async function decrypt(encryptedString: string): Promise<string> {
 
     return new TextDecoder().decode(decrypted);
   } catch (error) {
+    console.warn("Decryption failed. Returning original value. This may be expected for unencrypted legacy data.", error);
     // If decryption fails, it might be because the data was never encrypted.
     // Return the original string. In a real E2EE app, this would be an error.
     return encryptedString;
