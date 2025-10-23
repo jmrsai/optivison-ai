@@ -35,33 +35,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-function getUserProfile(uid: string): UserProfile | null {
-    if (typeof window === 'undefined') return null;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    return users[uid] || null;
-}
-
-
 export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: PatientAnalysisProps) {
   const [scans, setScans] = useState<Scan[]>(initialScans);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
   const [longitudinalAnalysis, setLongitudinalAnalysis] = useState<LongitudinalAnalysisOutput | null>(null);
   const [isLongitudinalLoading, setIsLongitudinalLoading] = useState(false);
-  const { user } = useUser();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user, profile: userProfile } = useUser();
 
 
   useEffect(() => {
     setScans(initialScans);
   }, [initialScans]);
-  
-  useEffect(() => {
-    if (user) {
-        const profile = getUserProfile(user.uid);
-        setUserProfile(profile);
-    }
-  }, [user]);
 
   const handleNewAnalysis = async ({
     imageFile,
@@ -77,23 +62,34 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
 
     const scanDate = new Date().toISOString().split('T')[0];
 
-    const newScanPlaceholder: Omit<Scan, 'id'> = {
+    const newScanPlaceholder: Omit<Scan, 'id' | 'imageUrl' | 'storagePath'> = {
       patientId: patient.id,
       clinicianId: user.uid,
       date: scanDate,
-      imageUrl: URL.createObjectURL(imageFile),
       clinicalNotes,
       status: 'processing',
     };
     
     let scanId: string | null = null;
     try {
-        scanId = await addScan(newScanPlaceholder);
-        
-        // Add placeholder to UI immediately
-        const tempScanForUi = { ...newScanPlaceholder, id: scanId };
+        const { scanId: newScanId, uploadTask } = await addScan(newScanPlaceholder, imageFile);
+        scanId = newScanId;
+
+        // Add placeholder to UI immediately with a local URL
+        const tempScanForUi: Scan = { 
+          ...newScanPlaceholder, 
+          id: scanId,
+          imageUrl: URL.createObjectURL(imageFile),
+          status: 'processing'
+        };
         setScans(prevScans => [tempScanForUi, ...prevScans]);
 
+        toast({ title: "Uploading Scan...", description: "Your scan is being securely uploaded." });
+
+        const snapshot = await uploadTask;
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        await updateScan(scanId, { imageUrl: downloadURL, storagePath: snapshot.ref.fullPath });
 
         const eyeScanDataUri = await fileToDataUri(imageFile);
         let documentDataUri: string | undefined;
@@ -116,15 +112,11 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         });
         
         const analysisUpdate: Partial<Scan> = {
-            imageUrl: eyeScanDataUri, // Store the permanent data URI
             analysis: analysisResult,
             status: 'completed',
         };
         
         await updateScan(scanId, analysisUpdate);
-
-        // Update UI with analysis, but report is still pending
-        setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, ...analysisUpdate } : s)));
         
         toast({ title: "Analysis Complete, Generating Report...", description: "The AI is now generating the full patient report." });
 
@@ -143,8 +135,6 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         };
 
         await updateScan(scanId, reportUpdate);
-
-        setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, ...reportUpdate } : s)));
         
         if (analysisResult.riskLevel && analysisResult.riskLevel !== 'N/A') {
             const updatedPatient = { riskLevel: analysisResult.riskLevel, lastVisit: scanDate };
@@ -161,8 +151,6 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
         if (scanId) {
             const failedScanUpdate = { status: 'failed' as const };
             await updateScan(scanId, failedScanUpdate);
-            // Update UI for the failed scan
-             setScans((prev) => prev.map((s) => (s.id === scanId ? { ...s, status: 'failed' } : s)));
         }
 
         toast({
@@ -317,3 +305,5 @@ export function PatientAnalysis({ patient, initialScans, onPatientUpdate }: Pati
     </div>
   );
 }
+
+    

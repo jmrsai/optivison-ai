@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Users, ScanEye, AlertTriangle, LogIn, Loader2 } from 'lucide-react';
 import type { Patient, UserProfile, Scan } from '@/lib/types';
-import { useAuth } from '@/firebase/auth/provider';
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -15,25 +15,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { RegisterPatientForm } from '@/components/register-patient-form';
 import { PatientPortal } from '@/components/patient-portal';
 import { ClientLayout } from '@/components/layout/client-layout';
-
-function getClinicianData(clinicianId: string): { patients: Patient[], scans: Scan[] } {
-    if (typeof window === 'undefined') return { patients: [], scans: [] };
-    
-    const allPatients = JSON.parse(localStorage.getItem('patients') || '{}');
-    const allScans = JSON.parse(localStorage.getItem('scans') || '{}');
-
-    const patients = Object.values(allPatients).filter((p: any) => p.clinicianId === clinicianId) as Patient[];
-    const scans = Object.values(allScans).filter((s: any) => s.clinicianId === clinicianId) as Scan[];
-
-    return { patients, scans };
-}
-
-function getUserProfile(uid: string): UserProfile | null {
-    if (typeof window === 'undefined') return null;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    return users[uid] || null;
-}
-
+import { useFirebase } from '@/firebase/provider';
+import { collection, query, where } from 'firebase/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useAuth } from '@/firebase/auth/provider';
 
 function StatCard({ title, value, icon: Icon, loading }: { title: string; value: string | number; icon: React.ElementType, loading?: boolean }) {
   return (
@@ -50,30 +35,23 @@ function StatCard({ title, value, icon: Icon, loading }: { title: string; value:
 }
 
 function ClinicianDashboard() {
-  const { user } = useUser();
+  const { user, profile } = useUser();
+  const { firestore } = useFirebase();
   const [isSheetOpen, setSheetOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState<{ patients: Patient[], scans: Scan[] }>({ patients: [], scans: [] });
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-        const data = getClinicianData(user.uid);
-        setDashboardData(data);
-        setLoading(false);
-    }
-  }, [user]);
+  const patientsRef = firestore && user ? query(collection(firestore, 'patients'), where('clinicianId', '==', user.uid)) : null;
+  const [patients, patientsLoading] = useCollectionData(patientsRef, { idField: 'id' });
 
-  const highRiskPatients = dashboardData.patients.filter(p => p.riskLevel === 'High').length;
+  const scansRef = firestore && user ? query(collection(firestore, 'scans'), where('clinicianId', '==', user.uid)) : null;
+  const [scans, scansLoading] = useCollectionData(scansRef);
+
+  const highRiskPatients = patients?.filter(p => p.riskLevel === 'High').length || 0;
 
   const handlePatientRegistered = () => {
     setSheetOpen(false);
-    if (user) {
-        setLoading(true);
-        const data = getClinicianData(user.uid);
-        setDashboardData(data);
-        setLoading(false);
-    }
   };
+
+  const loading = patientsLoading || scansLoading;
 
   return (
     <>
@@ -89,8 +67,8 @@ function ClinicianDashboard() {
       </div>
       
       <div className="grid gap-4 md:grid-cols-3 mb-8">
-          <StatCard title="Total Patients" value={dashboardData.patients.length} icon={Users} loading={loading} />
-          <StatCard title="Total Scans" value={dashboardData.scans.length} icon={ScanEye} loading={loading} />
+          <StatCard title="Total Patients" value={patients?.length || 0} icon={Users} loading={loading} />
+          <StatCard title="Total Scans" value={scans?.length || 0} icon={ScanEye} loading={loading} />
           <StatCard title="High-Risk Patients" value={highRiskPatients} icon={AlertTriangle} loading={loading} />
       </div>
 
@@ -99,7 +77,7 @@ function ClinicianDashboard() {
           <CardTitle>Patient Roster</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? <p>Loading patients...</p> : <PatientList patients={dashboardData.patients} />}
+          {loading ? <p>Loading patients...</p> : <PatientList patients={patients as Patient[] || []} />}
         </CardContent>
       </Card>
 
@@ -122,22 +100,11 @@ function ClinicianDashboard() {
 
 
 function DashboardContent() {
-  const { user, loading: userLoading } = useUser();
+  const { user, profile, loading: userLoading } = useUser();
   const router = useRouter();
   const auth = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-        const userProfile = getUserProfile(user.uid);
-        setProfile(userProfile);
-    }
-    setProfileLoading(false);
-  }, [user]);
-
   
-  if (userLoading || (user && profileLoading)) {
+  if (userLoading) {
     return (
         <div className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
@@ -167,7 +134,7 @@ function DashboardContent() {
     )
   }
   
-  if (!profileLoading && !profile) {
+  if (!userLoading && !profile) {
     return (
       <div className="flex-1 container mx-auto p-4 md:p-8 flex items-center justify-center">
             <Card className="max-w-md w-full text-center">
@@ -200,3 +167,5 @@ export default function DashboardPage() {
         </ClientLayout>
     )
 }
+
+    

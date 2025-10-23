@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
        toast({
           variant: "destructive",
           title: "Registration Failed",
-          description: "Could not save patient data locally.",
+          description: "Could not save patient data.",
       });
       console.error("Failed to register patient:", error);
     }
@@ -171,3 +172,5 @@ export function RegisterPatientForm({ onPatientRegistered }: RegisterPatientForm
     </Form>
   );
 }
+
+    

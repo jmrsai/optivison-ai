@@ -85,7 +85,7 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
         <div className="w-[250px] flex-shrink-0">
           <Section title="Scan Image">
               <div className="border rounded-md p-1 bg-gray-50">
-                    <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} width={400} height={300} className="rounded w-full" data-ai-hint="eye scan" />
+                    <Image src={scan.imageUrl!} alt={`Scan from ${scan.date}`} width={400} height={300} className="rounded w-full" data-ai-hint="eye scan" />
               </div>
           </Section>
           <Section title="Key Metrics">
@@ -114,3 +114,5 @@ export function PrintableReport({ scan, patient }: PrintableReportProps) {
     </div>
   );
 }
+
+    

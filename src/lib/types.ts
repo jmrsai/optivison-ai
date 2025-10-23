@@ -20,6 +20,7 @@ export type Patient = {
   avatarUrl: string;
   riskLevel: 'Low' | 'Medium' | 'High' | 'N/A';
   history: string; // This will be the encrypted string
+  role?: 'patient';
 };
 
 export type ScanAnalysis = z.infer<typeof AnalyzeEyeScanOutputSchema>;
@@ -30,7 +31,8 @@ export type Scan = {
   patientId: string;
   clinicianId: string;
   date: string; // ISO string date
-  imageUrl: string;
+  imageUrl?: string;
+  storagePath?: string; // Path in Firebase Storage
   clinicalNotes: string; // This will be the encrypted string
   status: 'completed' | 'processing' | 'failed';
   analysis?: ScanAnalysis;
@@ -44,3 +46,5 @@ export type Message = {
     receiverId: string;
     timestamp: number; // Use number for client-side timestamp
 };
+
+    

@@ -149,7 +149,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {scan.status === 'processing' && <LoadingState />}
+        {scan.status === 'processing' && (scan.imageUrl ? <LoadingState /> : <div className="flex items-center gap-2"><Loader className="animate-spin h-5 w-5 mr-2" /> Uploading image and preparing for analysis...</div>)}
         {scan.status === 'failed' && <FailedState />}
         {scan.status === 'completed' && scan.analysis && (
           <div>
@@ -161,7 +161,7 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
              </div>
             <div className="grid md:grid-cols-2 gap-6 items-start mt-4">
               <div className="w-full aspect-video relative rounded-lg overflow-hidden border">
-                <Image src={scan.imageUrl} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
+                <Image src={scan.imageUrl!} alt={`Scan from ${scan.date}`} fill objectFit="contain" data-ai-hint="eye scan" />
               </div>
 
               <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -188,3 +188,5 @@ export function ScanCard({ scan, patient }: ScanCardProps) {
     </Card>
   );
 }
+
+    

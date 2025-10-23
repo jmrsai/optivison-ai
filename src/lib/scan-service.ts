@@ -1,60 +1,56 @@
+
 import type { Scan } from "./types";
 import { encrypt } from "./crypto";
-
-const getScansFromStorage = (): Record<string, Scan> => {
-  if (typeof window === 'undefined') return {};
-  const data = localStorage.getItem('scans');
-  return data ? JSON.parse(data) : {};
-};
-
-const saveScansToStorage = (scans: Record<string, Scan>) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('scans', JSON.stringify(scans));
-};
+import { initializeFirebase } from "@/firebase";
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { ref, uploadBytesResumable, type UploadTask } from 'firebase/storage';
 
 /**
- * Adds a new scan to localStorage.
- * @param scan The scan data to add (without the id).
- * @returns The ID of the newly created scan document.
+ * Adds a new scan document to Firestore and initiates image upload to Storage.
+ * @param scan The scan data to add (without the id and storage details).
+ * @param imageFile The image file to upload.
+ * @returns The ID of the newly created scan document and the upload task.
  */
-export async function addScan(scan: Omit<Scan, 'id'>): Promise<string> {
-  const scanData = { ...scan };
+export async function addScan(scan: Omit<Scan, 'id' | 'imageUrl' | 'storagePath'>, imageFile: File): Promise<{ scanId: string, uploadTask: UploadTask }> {
+  const { firestore, storage } = initializeFirebase();
+  let clinicalNotes = scan.clinicalNotes;
   if (scan.clinicalNotes) {
-    scanData.clinicalNotes = await encrypt(scan.clinicalNotes);
+    clinicalNotes = await encrypt(scan.clinicalNotes);
   }
 
-  const scanId = `scan_${Date.now()}`;
-  const newScan: Scan = {
-    ...scanData,
-    id: scanId,
-  };
-
-  const scans = getScansFromStorage();
-  scans[scanId] = newScan;
-  saveScansToStorage(scans);
+  const scanCollection = collection(firestore, 'scans');
   
-  return scanId;
+  const scanDocRef = await addDoc(scanCollection, {
+    ...scan,
+    clinicalNotes,
+    status: 'processing',
+    imageUrl: '', // Will be updated after upload
+    storagePath: '' // Will be updated after upload
+  });
+
+  const scanId = scanDocRef.id;
+  const storagePath = `scans/${scan.patientId}/${scanId}-${imageFile.name}`;
+  const storageRef = ref(storage, storagePath);
+  const uploadTask = uploadBytesResumable(storageRef, imageFile);
+  
+  return { scanId, uploadTask };
 }
 
 /**
- * Updates an existing scan in localStorage.
+ * Updates an existing scan in Firestore.
  * @param scanId The ID of the scan to update.
  * @param scanUpdate The partial scan data to update.
  */
 export async function updateScan(scanId: string, scanUpdate: Partial<Scan>): Promise<void> {
-  const scans = getScansFromStorage();
-  const existingScan = scans[scanId];
-
-  if (!existingScan) {
-    throw new Error("Scan not found");
-  }
-
-  const updateData = { ...scanUpdate };
+  const { firestore } = initializeFirebase();
+  const scanDocRef = doc(firestore, 'scans', scanId);
+  
+  const updateData: { [key: string]: any } = { ...scanUpdate };
   if (scanUpdate.clinicalNotes) {
     updateData.clinicalNotes = await encrypt(scanUpdate.clinicalNotes);
   }
   
-  const updatedScan = { ...existingScan, ...updateData };
-  scans[scanId] = updatedScan;
-  saveScansToStorage(scans);
+  await updateDoc(scanDocRef, updateData);
 }
+
+    

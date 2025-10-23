@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ClientLayout } from '@/components/layout/client-layout';
 import type { UserProfile } from '@/lib/types';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useFirebase } from '@/firebase/provider';
+
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -39,20 +42,21 @@ function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const { firestore } = useFirebase();
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
-  const saveUserToLocalStorage = (profile: UserProfile) => {
-    if (typeof window === 'undefined') return;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    users[profile.uid] = {
-        displayName: profile.displayName,
-        email: profile.email,
-        role: profile.role, 
-    };
-    localStorage.setItem('users', JSON.stringify(users));
+ const saveUserRole = async (uid: string, role: 'clinician' | 'patient', name?: string | null, email?: string | null) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', uid);
+    await setDoc(userDocRef, {
+      uid,
+      role,
+      displayName: name || 'User',
+      email: email || 'N/A'
+    }, { merge: true });
   };
 
 
@@ -148,21 +152,18 @@ function LoginContent() {
   }
 
   const handleVerifyCode = async (data: z.infer<typeof phoneFormSchema>) => {
-    if (!confirmationResult || !data.verificationCode || !auth) return;
+    if (!confirmationResult || !data.verificationCode || !auth || !firestore) return;
     setIsSubmittingPhone(true);
     try {
         const userCredential = await confirmationResult.confirm(data.verificationCode);
         const user = userCredential.user;
-        
-        // Assume phone users are clinicians for this demo
-        const userProfile: UserProfile = {
-            uid: user.uid,
-            displayName: user.displayName || user.phoneNumber,
-            email: user.email,
-            role: 'clinician',
-        };
-        saveUserToLocalStorage(userProfile);
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
 
+        if (!userDoc.exists()) {
+             await saveUserRole(user.uid, 'clinician', user.displayName, user.email);
+        }
+        
         toast({
             title: "Login Successful",
             description: "You have been successfully logged in.",
@@ -193,13 +194,7 @@ function LoginContent() {
       const additionalUserInfo = getAdditionalUserInfo(result);
       if (additionalUserInfo?.isNewUser) {
         // Assume new Google users are clinicians
-        const userProfile: UserProfile = {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            role: 'clinician',
-        };
-        saveUserToLocalStorage(userProfile);
+         await saveUserRole(user.uid, 'clinician', user.displayName, user.email);
       }
 
       toast({
@@ -395,5 +390,7 @@ export default function LoginPage() {
         </ClientLayout>
     )
 }
+
+    
 
     

@@ -45,13 +45,6 @@ function SettingsContent() {
     if (!auth) return;
     try {
       await signOut(auth);
-      // Clear local storage on logout
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('users');
-        localStorage.removeItem('patients');
-        localStorage.removeItem('scans');
-        localStorage.removeItem('optivision_crypto_key');
-      }
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
@@ -202,3 +195,5 @@ export default function SettingsPage() {
         </ClientLayout>
     )
 }
+
+    
