@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser } from '@/firebase/auth/use-user';
@@ -23,14 +22,14 @@ function getPatientPortalData(userId: string): { patient: Patient | null, scans:
     const allPatients = JSON.parse(allPatientsData);
     
     // Find the patient document that has a matching userId
-    const patientEntry = Object.entries(allPatients).find(([id, p]: [string, any]) => p.userId === userId);
+    const patientEntry = Object.entries(allPatients).find(([, p]: [string, any]) => p.userId === userId);
 
     if (!patientEntry) {
         return { patient: null, scans: [] };
     }
 
     const [patientId, patientData] = patientEntry;
-    const patient = { ...(patientData as Patient), id: patientId };
+    const patient: Patient = { ...(patientData as Omit<Patient, 'id'>), id: patientId };
 
     const allScansData = localStorage.getItem('scans');
     if (!allScansData) return { patient, scans: [] };
