@@ -20,7 +20,11 @@ export function initializeFirebase(): {
   
   let analytics: Analytics | null = null;
   if (typeof window !== 'undefined') {
-    analytics = getAnalytics(app);
+    try {
+      analytics = getAnalytics(app);
+    } catch (e) {
+      console.error("Firebase Analytics is not available in this environment.");
+    }
   }
 
   return { firebaseApp: app, firestore, auth, analytics };

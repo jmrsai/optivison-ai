@@ -1,16 +1,27 @@
 
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  apiKey: "AIzaSyAgFv1mZHfjE12ifT7FHoCMnP97ysngwx0",
+  authDomain: "synergy-research-hub.firebaseapp.com",
+  databaseURL: "https://synergy-research-hub-default-rtdb.firebaseio.com",
+  projectId: "synergy-research-hub",
+  storageBucket: "synergy-research-hub.appspot.com",
+  messagingSenderId: "617880536152",
+  appId: "1:617880536152:web:f9d5ca6ef1da197cb1762d",
+  measurementId: "G-6G5WCLY2WW"
 };
 
 // this function is exported FOR CLIENT-SIDE USE ONLY!
 export function getFirebaseConfigClient() {
+    // Check if all required fields are present
+    if (
+        !firebaseConfig.apiKey ||
+        !firebaseConfig.authDomain ||
+        !firebaseConfig.projectId
+    ) {
+        throw new Error(
+        'Firebase configuration is missing or incomplete. Please check your environment variables.'
+        );
+    }
     return firebaseConfig;
 };
